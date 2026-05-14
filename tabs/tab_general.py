@@ -5,54 +5,45 @@ from modules.charts import (
 )
 
 def render_tab_general():
-    # Lấy tập dữ liệu đã qua xử lý lọc tại Sidebar từ bộ nhớ dùng chung
     if 'filtered_df' not in st.session_state:
-        st.warning("Hệ thống đang đồng bộ dữ liệu lọc...")
         return
         
     df_filtered = st.session_state['filtered_df']
-
-    # Thống kê nhanh các chỉ số KPI động theo tập dữ liệu hiện hành
     total_students = len(df_filtered)
-    avg_gpa_100 = df_filtered['gpa_scaled'].mean() if total_students > 0 else 0
-    avg_study_hours = df_filtered['time_studying'].mean() if total_students > 0 else 0
 
-    st.markdown("##### 📊 Kết quả phân tích tổng quan nhóm Toàn khối")
-    
+    # Khung KPI tinh gọn, ép sát lề trên
     kpi1, kpi2, kpi3 = st.columns(3)
-    with kpi1:
-        st.metric("Tổng mẫu khảo sát (n)", f"{total_students:,} SV")
-    with kpi2:
-        st.metric("GPA trung bình toàn nhóm", f"{df_filtered['gpa_raw'].mean():.2f} / 5.00" if total_students > 0 else "0.00")
-    with kpi3:
-        st.metric("Mức độ tự học bình quân", f"Mức {avg_study_hours:.1f} / 5")
-    st.markdown("---")
+    kpi1.markdown(f"<div style='text-align:center; border-right:1px solid #eee;'><span style='font-size:11px; color:gray;'>Mẫu khảo sát (n)</span><br><b style='font-size:18px; color:#2a9d8f;'>{total_students:,} SV</b></div>", unsafe_allow_html=True)
+    kpi2.markdown(f"<div style='text-align:center; border-right:1px solid #eee;'><span style='font-size:11px; color:gray;'>GPA trung bình</span><br><b style='font-size:18px; color:#2a9d8f;'>{df_filtered['gpa_raw'].mean():.2f} / 5.00</b></div>", unsafe_allow_html=True)
+    kpi3.markdown(f"<div style='text-align:center;'><span style='font-size:11px; color:gray;'>Tự học bình quân</span><br><b style='font-size:18px; color:#2a9d8f;'>Mức {df_filtered['time_studying'].mean():.1f} / 5</b></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-bottom:10px;'></div>", unsafe_allow_html=True)
 
     if total_students == 0:
-        st.info("💡 Không có dữ liệu phù hợp với điều kiện bộ lọc hiện tại trên Sidebar. Vui lòng chọn lại!")
+        st.info("Không có dữ liệu phù hợp với điều kiện bộ lọc.")
         return
 
-    # Khởi tạo mạng lưới ma trận hiển thị 6 biểu đồ phân tích tương quan
-    row1_c1, row1_c2 = st.columns(2)
+    # TÁI CẤU TRÚC: Chuyển đổi sang lưới 3 cột để ép gọn không gian dọc
+    row1_c1, row1_c2, row1_c3 = st.columns(3)
+    row2_c1, row2_c2, row2_c3 = st.columns(3)
+
+    # --- HÀNG 1 ---
     with row1_c1:
-        st.markdown("<p style='font-weight:bold; color:#2a9d8f;'>📊 Cơ cấu học lực toàn nhóm</p>", unsafe_allow_html=True)
-        st.plotly_chart(draw_pie_chart(df_filtered), use_container_width=True)
+        st.markdown("<p style='font-size:12px; font-weight:bold; color:#2a9d8f; margin:0;'>📊 Cơ cấu học lực nhóm</p>", unsafe_allow_html=True)
+        st.plotly_chart(draw_pie_chart(df_filtered), use_container_width=True, config={'displayModeBar': False})
     with row1_c2:
-        st.markdown("<p style='font-weight:bold; color:#2a9d8f;'>📊 Cấu trúc học lực của các giới tính (%)</p>", unsafe_allow_html=True)
-        st.plotly_chart(draw_stacked_bar(df_filtered), use_container_width=True)
+        st.markdown("<p style='font-size:12px; font-weight:bold; color:#2a9d8f; margin:0;'>📊 Học lực theo giới tính (%)</p>", unsafe_allow_html=True)
+        st.plotly_chart(draw_stacked_bar(df_filtered), use_container_width=True, config={'displayModeBar': False})
+    with row1_c3:
+        st.markdown("<p style='font-size:12px; font-weight:bold; color:#2a9d8f; margin:0;'>📈 Biến thiên kết quả theo năm</p>", unsafe_allow_html=True)
+        st.plotly_chart(draw_line_chart(df_filtered), use_container_width=True, config={'displayModeBar': False})
 
-    row2_c1, row2_c2 = st.columns(2)
+    # --- HÀNG 2 ---
     with row2_c1:
-        st.markdown("<p style='font-weight:bold; color:#2a9d8f;'>📈 Biến thiên kết quả học tập qua các năm</p>", unsafe_allow_html=True)
-        st.plotly_chart(draw_line_chart(df_filtered), use_container_width=True)
+        st.markdown("<p style='font-size:12px; font-weight:bold; color:#2a9d8f; margin:0;'>📊 Kết quả theo diện chính sách</p>", unsafe_allow_html=True)
+        st.plotly_chart(draw_policy_bar(df_filtered), use_container_width=True, config={'displayModeBar': False})
     with row2_c2:
-        st.markdown("<p style='font-weight:bold; color:#2a9d8f;'>📊 Tương quan kết quả học tập theo diện chính sách</p>", unsafe_allow_html=True)
-        st.plotly_chart(draw_policy_bar(df_filtered), use_container_width=True)
-
-    row3_c1, row3_c2 = st.columns(2)
-    with row3_c1:
-        st.markdown("<p style='font-weight:bold; color:#2a9d8f;'>🔮 Tương quan Thời gian tự học và Học lực</p>", unsafe_allow_html=True)
-        st.plotly_chart(draw_scatter_plot(df_filtered), use_container_width=True)
-    with row3_c2:
-        st.markdown("<p style='font-weight:bold; color:#2a9d8f;'>🔥 Ma trận mật độ phân hạng học sinh sinh viên</p>", unsafe_allow_html=True)
-        st.plotly_chart(draw_density_heatmap(df_filtered), use_container_width=True)
+        st.markdown("<p style='font-size:12px; font-weight:bold; color:#2a9d8f; margin:0;'>🔮 Thời gian học vs Học lực</p>", unsafe_allow_html=True)
+        st.plotly_chart(draw_scatter_plot(df_filtered), use_container_width=True, config={'displayModeBar': False})
+    with row2_c3:
+        st.markdown("<p style='font-size:12px; font-weight:bold; color:#2a9d8f; margin:0;'>🔥 Bản đồ nhiệt phân hạng SV</p>", unsafe_allow_html=True)
+        st.plotly_chart(draw_density_heatmap(df_filtered), use_container_width=True, config={'displayModeBar': False})
