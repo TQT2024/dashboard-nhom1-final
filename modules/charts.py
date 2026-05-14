@@ -89,5 +89,9 @@ def draw_treemap(df):
         color='Số lượng', color_continuous_scale='YlGnBu'
     )
     fig.update_traces(textinfo="label+value")
-    fig.update_layout(**COMMON_LAYOUT, coloraxis_showscale=False, margin=dict(l=0, r=0, t=0, b=0))
+    
+    # ĐÃ FIX LOGIC GHI ĐÈ THAM SỐ TẠI ĐÂY
+    fig.update_layout(**COMMON_LAYOUT) 
+    fig.update_layout(coloraxis_showscale=False, margin=dict(l=0, r=0, t=0, b=0)) 
+    
     return fig
