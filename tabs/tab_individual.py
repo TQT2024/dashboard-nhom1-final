@@ -1,73 +1,102 @@
 import streamlit as st
 import pandas as pd
-from modules.database import load_individual_data
-from modules.ai_mentor import generate_advice
-# GIỮ NGUYÊN ĐÚNG CHUẨN: Gọi từ module charts2 dành riêng cho Tab Cá nhân
+import os
+from modules.db import load_individual_data
 from modules.charts2 import draw_radar_chart
+import google.generativeai as genai
 
 def render_tab_individual():
-    df = load_individual_data()
-    if df.empty:
-        st.warning("Hệ thống chưa tải được dữ liệu hồ sơ cá nhân. Vui lòng kiểm tra lại SQL View.")
+    # 1. Triệu hồi dữ liệu thuộc tính cá nhân từ cơ sở dữ liệu hồ sơ
+    try:
+        df_profile_all = load_individual_data()
+    except Exception as e:
+        st.error(f"Lỗi tải thông tin định danh sinh viên: {e}")
         return
 
-    st.markdown("""
-        <style>
-        .block-container { padding-top: 1rem; padding-bottom: 1rem; }
-        div.stSelectbox { margin-bottom: -10px; }
-        .stAlert { padding: 8px 12px; border-radius: 6px; margin-bottom: -10px; }
-        </style>
-    """, unsafe_allow_html=True)
+    # Lấy tập dữ liệu vĩ mô hiện tại từ Sidebar để ép danh sách sinh viên co giãn theo
+    if 'filtered_df' not in st.session_state:
+        return
+    df_filtered_macro = st.session_state['filtered_df']
+    
+    # Thực hiện lọc thác nước: Chỉ lấy những sinh viên có ID nằm trong danh sách bộ lọc vĩ mô
+    allowed_ids = df_filtered_macro['student_id'].astype(str).tolist()
+    df_profile_allowed = df_profile_all[df_profile_all['student_id'].astype(str).isin(allowed_ids)]
 
-    st.markdown("### Tra cứu chi tiết kết quả sinh viên")
+    st.markdown("##### 👤 Tra cứu và phân tích hồ sơ chi tiết sinh viên")
 
-    student_list = df['student_id'].tolist()
-    selected_id = st.selectbox("Lựa chọn Mã Sinh viên (Student ID):", options=student_list, index=0)
+    if df_profile_allowed.empty:
+        st.warning("⚠️ Không có sinh viên nào thỏa mãn tiêu chí bộ lọc diện rộng đã chọn ở Sidebar.")
+        return
 
-    student_data = df[df['student_id'] == selected_id].iloc
-
-    st.info(
-        f"👤 **Họ và tên:** {student_data['full_name']} | "
-        f"📧 **Email:** {student_data['email']} | "
-        f"🧬 **Giới tính:** {student_data['gender_label']} | "
-        f"📅 **Năm học:** {student_data['year_label']}"
+    # 2. Xây dựng thanh chọn sinh viên phụ thuộc hạ nguồn (Cascading)
+    student_options = df_profile_allowed.apply(
+        lambda r: f"{r['student_id']} - {r.get('full_name', 'Ẩn danh hóa')}", axis=1
+    ).tolist()
+    
+    selected_option = st.selectbox(
+        "Lựa chọn Mã số sinh viên cần kết xuất hồ sơ học thuật:", 
+        options=student_options, 
+        key="sb_individual_engine"
     )
+    
+    # Tách chuỗi lấy mã định danh nguyên bản dạng String an toàn
+    selected_id = selected_option.split(" - ")[0]
+    
+    # Trích xuất bản ghi thông tin của sinh viên duy nhất được chọn
+    student_data = df_profile_allowed[df_profile_allowed['student_id'].astype(str) == selected_id].iloc[0]
 
-    st.write("") 
-    col_chart, col_ai = st.columns([1.1, 1])
+    # 3. Phân bổ bố cục giao diện trực quan
+    col_info, col_chart = st.columns([2, 3])
+
+    with col_info:
+        st.markdown("<p style='font-size:18px; font-weight:bold; color:#e76f51; margin-bottom:10px;'>📋 Lý lịch hành chính</p>", unsafe_allow_html=True)
+        st.write(f"**Mã định danh (ID):** {student_data['student_id']}")
+        st.write(f"**Họ và tên:** {student_data.get('full_name', 'Nguyễn Văn A (Faker)')}")
+        st.write(f"**Giới tính:** {student_data.get('gender_label', 'Chưa phân loại')}")
+        st.write(f"**Giai đoạn đào tạo:** {student_data.get('year_label', 'Chưa rõ')}")
+        st.write(f"**Diện chính sách:** {student_data.get('policy_label', 'Không')}")
+        
+        st.markdown("---")
+        st.markdown("<p style='font-size:16px; font-weight:bold; color:#2a9d8f; margin-bottom:10px;'>🎯 Chỉ số năng lực quy đổi (Thang điểm 100)</p>", unsafe_allow_html=True)
+        st.write(f"• **Điểm kết quả GPA:** {student_data['gpa_scaled']:.1f} pts")
+        st.write(f"• **Năng lực Tự lực học tập:** {student_data['index_tu_luc_scaled']:.1f} pts")
+        st.write(f"• **Đánh giá Môi trường trường học:** {student_data['index_moi_truong_truong_scaled']:.1f} pts")
+        st.write(f"• **Áp lực & Động lực bạn bè:** {student_data['index_moi_truong_ban_be_scaled']:.1f} pts")
 
     with col_chart:
-        st.markdown("<p style='font-size:12px; font-weight: bold; margin-bottom:2px; color:#444;'>So sánh các chỉ số cá nhân với mức Trung bình khóa</p>", unsafe_allow_html=True)
-        st.plotly_chart(draw_radar_chart(student_data, df), width='stretch', config={'displayModeBar': False})
+        st.markdown("<p style='font-size:18px; font-weight:bold; color:#2a9d8f; text-align:center; margin-bottom:10px;'>🕸️ Biểu đồ tương quan năng lực toàn diện</p>", unsafe_allow_html=True)
+        fig_radar = draw_radar_chart(student_data, df_profile_all)
+        st.plotly_chart(fig_radar, use_container_width=True)
 
-    with col_ai:
-        st.markdown("<p style='font-size:12px; font-weight: bold; margin-bottom:2px; color:#444;'>Nhận xét và Đề xuất</p>", unsafe_allow_html=True)
+    # 4. Tích hợp Trợ lý Trí tuệ nhân tạo Gemini API 2026 [INDEX, 13]
+    st.markdown("---")
+    st.markdown("<p style='font-size:18px; font-weight:bold; color:#2a9d8f;'>🤖 Trợ lý AI Gemini - Tư vấn & Định hướng Học thuật cá nhân</p>", unsafe_allow_html=True)
+    
+    if st.button("✨ Khởi tạo phân tích định hướng chuyên sâu từ Gemini AI"):
+        api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
         
-        if 'ai_mentor_cache' not in st.session_state:
-            st.session_state['ai_mentor_cache'] = {}
-            st.session_state['current_student'] = None
-
-        if st.session_state['current_student'] != selected_id:
-            with st.spinner("Hệ thống đang phân tích dữ liệu..."):
-                safe_student_info = {
-                    'student_id': str(student_data['student_id']),
-                    'index_tu_luc_scaled': float(student_data['index_tu_luc_scaled']),
-                    'index_moi_truong_truong_scaled': float(student_data['index_moi_truong_truong_scaled']),
-                    'index_moi_truong_ban_be_scaled': float(student_data['index_moi_truong_ban_be_scaled']),
-                    'gpa_scaled': float(student_data['gpa_scaled'])
-                }
-                advice = generate_advice(safe_student_info)
-                st.session_state['ai_mentor_cache'][selected_id] = advice
-                st.session_state['current_student'] = selected_id
-                caption_log = "Kết quả phân tích"
+        if not api_key:
+            st.warning("⚠️ Chưa cấu hình mã bảo mật `GEMINI_API_KEY` trong Secrets.")
+            st.info(f"💡 **Phân tích nhanh:** Sinh viên sở hữu điểm Tự lực đạt {student_data['index_tu_luc_scaled']:.1f}/100. Hãy duy trì tốt cường độ tự học hiện tại để bứt phá kết quả GPA.")
         else:
-            caption_log = "Kết quả truy xuất"
-
-        current_advice = st.session_state['ai_mentor_cache'].get(selected_id, "Chưa có nhận xét.")
-        st.caption(caption_log)
-        st.success(current_advice)
-        
-        st.markdown("<div style='margin-top:-5px; margin-bottom:5px;'><hr style='margin:0; border-top: 1px solid #e2e8f0;'/></div>", unsafe_allow_html=True)
-        
-        export_df = pd.DataFrame([{"Mã SV": student_data['student_id'], "Họ tên": student_data['full_name'], "GPA Quy đổi": f"{student_data['gpa_scaled']:.1f}/100", "Nhận xét": current_advice}])
-        st.download_button(label="📥 Tải báo cáo kết quả học tập cá nhân (.csv)", data=export_df.to_csv(index=False).encode('utf-8-sig'), file_name=f"Bao_cao_SV_{student_data['student_id']}.csv", mime="text/csv")
+            with st.spinner("Gemini đang phân tích dữ liệu..."):
+                try:
+                    genai.configure(api_key=api_key)
+                    model = genai.GenerativeModel("gemini-1.5-flash")
+                    
+                    prompt = f"""
+                    Bạn là một cố vấn học tập cao cấp giàu kinh nghiệm. Hãy phân tích hồ sơ sinh viên sau dựa trên dữ liệu khảo sát thực tế:
+                    - Điểm GPA chuẩn hóa: {student_data['gpa_scaled']}/100
+                    - Chỉ số năng lực Tự lực: {student_data['index_tu_luc_scaled']}/100
+                    - Đánh giá môi trường nhà trường: {student_data['index_moi_truong_truong_scaled']}/100
+                    - Áp lực và động lực từ bạn bè: {student_data['index_moi_truong_ban_be_scaled']}/100
+                    
+                    Yêu cầu cấu trúc phản hồi ngắn gọn dưới 150 từ, ngôn ngữ chuyên nghiệp:
+                    1. Đánh giá ngắn gọn điểm mạnh, điểm yếu nổi bật nhất dựa trên độ chênh lệch chỉ số.
+                    2. Đưa ra 2 hành động cụ thể giúp sinh viên tối ưu hóa lộ trình học tập hoặc phát triển sau tốt nghiệp.
+                    """
+                    response = model.generate_content(prompt)
+                    st.success("Nhận xét học thuật chuyên sâu từ AI:")
+                    st.markdown(response.text)
+                except Exception as ex:
+                    st.error(f"Lỗi cổng kết nối Gemini API: {ex}")
