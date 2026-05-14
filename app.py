@@ -26,7 +26,7 @@ if 'raw_df' not in st.session_state:
 df = st.session_state['raw_df']
 
 # --- SIDEBAR BỘ LỌC ---
-st.sidebar.header("🔍 BỘ LỌC HỆ THỐNG")
+st.sidebar.header("BỘ LỌC")
 available_years = sorted(df['year_label'].unique().tolist())
 selected_years = st.sidebar.multiselect("Giai đoạn học tập:", options=available_years, default=available_years)
 
@@ -55,14 +55,13 @@ if selected_genders:
 st.session_state['filtered_df'] = df_filtered
 
 # Chú thích thang đo (Ẩn hiện thông minh)
-with st.sidebar.expander("ℹ️ THÔNG TIN THANG ĐO", expanded=False):
+with st.sidebar.expander(" THÔNG TIN THANG ĐO", expanded=False):
     st.caption("Dữ liệu được chuẩn hóa thang 100 từ khảo sát Likert 1-5.")
 
 # --- GIAO DIỆN CHÍNH ---
 st.markdown(f"<h2 style='text-align: center; color:#2a9d8f;'>PHÂN TÍCH CÁC NHÂN TỐ ẢNH HƯỞNG ĐẾN KẾT QUẢ HỌC TẬP</h2>", unsafe_allow_html=True)
-st.markdown(f"<p style='text-align: center; color:gray; font-size:14px;'>Đồ án cuối kỳ - {filter_suffix}</p>", unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs(["📊 PHÂN TÍCH TỔNG QUAN", "👤 HỒ SƠ & TRỢ LÝ AI"])
+tab1, tab2 = st.tabs([" PHÂN TÍCH TỔNG QUAN", "👤 HỒ SƠ & TRỢ LÝ AI"])
 
 with tab1:
     render_tab_general()
