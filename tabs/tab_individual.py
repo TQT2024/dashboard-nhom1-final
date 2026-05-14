@@ -3,7 +3,8 @@ import pandas as pd
 import os
 from modules.db import load_individual_data
 from modules.charts2 import draw_radar_chart
-import google.generativeai as genai
+# Cập nhật cấu trúc thư viện google-genai mới đồng bộ với file requirements.txt
+from google import genai
 
 def render_tab_individual():
     # 1. Triệu hồi dữ liệu thuộc tính cá nhân từ cơ sở dữ liệu hồ sơ
@@ -39,14 +40,19 @@ def render_tab_individual():
         key="sb_individual_engine"
     )
     
-    # Tách chuỗi lấy mã định danh nguyên bản dạng String an toàn
+    # Tách chuỗi lấy mã định danh nguyên bản dạng String an toàn không lỗi kiểu dữ liệu
     selected_id = selected_option.split(" - ")[0]
     
     # Trích xuất bản ghi thông tin của sinh viên duy nhất được chọn
-    student_data = df_profile_allowed[df_profile_allowed['student_id'].astype(str) == selected_id].iloc[0]
+    student_filtered = df_profile_allowed[df_profile_allowed['student_id'].astype(str) == selected_id]
+    if student_filtered.empty:
+        st.error("Không tìm thấy dữ liệu sinh viên hợp lệ.")
+        return
+        
+    student_data = student_filtered.iloc[0]
 
     # 3. Phân bổ bố cục giao diện trực quan
-    col_info, col_chart = st.columns([2, 3])
+    col_info, col_chart = st.columns(2)
 
     with col_info:
         st.markdown("<p style='font-size:18px; font-weight:bold; color:#e76f51; margin-bottom:10px;'>📋 Lý lịch hành chính</p>", unsafe_allow_html=True)
@@ -68,7 +74,7 @@ def render_tab_individual():
         fig_radar = draw_radar_chart(student_data, df_profile_all)
         st.plotly_chart(fig_radar, use_container_width=True)
 
-    # 4. Tích hợp Trợ lý Trí tuệ nhân tạo Gemini API 2026 [INDEX, 13]
+    # 4. Tích hợp Trợ lý Trí tuệ nhân tạo Gemini API theo bộ SDK google-genai mới [INDEX, 13]
     st.markdown("---")
     st.markdown("<p style='font-size:18px; font-weight:bold; color:#2a9d8f;'>🤖 Trợ lý AI Gemini - Tư vấn & Định hướng Học thuật cá nhân</p>", unsafe_allow_html=True)
     
@@ -81,8 +87,8 @@ def render_tab_individual():
         else:
             with st.spinner("Gemini đang phân tích dữ liệu..."):
                 try:
-                    genai.configure(api_key=api_key)
-                    model = genai.GenerativeModel("gemini-1.5-flash")
+                    # Khởi tạo Client theo cú pháp của thư viện mới google-genai
+                    client = genai.Client(api_key=api_key)
                     
                     prompt = f"""
                     Bạn là một cố vấn học tập cao cấp giàu kinh nghiệm. Hãy phân tích hồ sơ sinh viên sau dựa trên dữ liệu khảo sát thực tế:
@@ -95,7 +101,12 @@ def render_tab_individual():
                     1. Đánh giá ngắn gọn điểm mạnh, điểm yếu nổi bật nhất dựa trên độ chênh lệch chỉ số.
                     2. Đưa ra 2 hành động cụ thể giúp sinh viên tối ưu hóa lộ trình học tập hoặc phát triển sau tốt nghiệp.
                     """
-                    response = model.generate_content(prompt)
+                    
+                    # Sử dụng cấu trúc gọi hàm generate_content mới của năm 2026
+                    response = client.models.generate_content(
+                        model='gemini-1.5-flash',
+                        contents=prompt,
+                    )
                     st.success("Nhận xét học thuật chuyên sâu từ AI:")
                     st.markdown(response.text)
                 except Exception as ex:
