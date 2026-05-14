@@ -9,55 +9,65 @@ def render_tab_general():
         st.warning("Hệ thống chưa tải được dữ liệu. Vui lòng kiểm tra kết nối cơ sở dữ liệu.")
         return
 
-    st.markdown("### Chỉ số Tổng hợp (KPIs)")
+    st.markdown("### Chỉ số Tổng hợp Giai đoạn Chuyên sâu (KPIs)")
     
-    # Tính toán KPI
     total_students = len(df)
-    avg_gpa = df['gpa'].mean()
-    # Tính tỷ lệ sinh viên đạt GPA Khá, Giỏi (mức 4 và 5)
-    ratio_good = (len(df[df['gpa'] >= 4]) / total_students) * 100 if total_students > 0 else 0
+    avg_gpa_raw = df['gpa_raw'].mean()
+    ratio_good = (len(df[df['gpa_raw'] >= 4]) / total_students) * 100 if total_students > 0 else 0
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("Tổng số sinh viên (n)", total_students)
-    col2.metric("GPA Trung bình (Thang 5)", f"{avg_gpa:.2f}")
-    col3.metric("Tỷ lệ Học lực Khá/Giỏi (%)", f"{ratio_good:.1f}%")
+    col1.metric("Tổng số sinh viên (n)", f"{total_students} SV")
+    col2.metric("GPA Trung bình (Thang 5)", f"{avg_gpa_raw:.2f} / 5.00")
+    col3.metric("Tỷ lệ Học lực Khá/Giỏi trở lên", f"{ratio_good:.1f}%")
 
     st.markdown("---")
 
-    # Bố cục 2 biểu đồ
     c1, c2 = st.columns(2)
 
     with c1:
-        st.markdown("**So sánh Cấu trúc Học lực theo Giới tính**")
-        # Phân nhóm và tính tần suất để vẽ biểu đồ Stacked Bar
-        df_gender_gpa = df.groupby(['gender_label', 'gpa']).size().reset_index(name='count')
-        df_gender_gpa['gpa'] = df_gender_gpa['gpa'].astype(str) # Ép kiểu chuỗi để Plotly nhận diện biến phân loại
+        st.markdown("**So sánh Cấu trúc Học lực theo Giới tính (Hóa giải mẫu lệch 1:9)**")
+        
+        gpa_map = {1: "Yếu (<2.0)", 2: "Trung bình (2.0-2.5)", 3: "Khá (2.5-3.2)", 4: "Giỏi (3.2-3.6)", 5: "Xuất sắc (>3.6)"}
+        df['Học lực'] = df['gpa_raw'].map(gpa_map)
+        gpa_order = ["Yếu (<2.0)", "Trung bình (2.0-2.5)", "Khá (2.5-3.2)", "Giỏi (3.2-3.6)", "Xuất sắc (>3.6)"]
+
+        df_gender_gpa = df.groupby(['gender_label', 'Học lực']).size().reset_index(name='Số lượng')
         
         fig_bar = px.bar(
             df_gender_gpa, 
             y="gender_label", 
-            x="count", 
-            color="gpa", 
+            x="Số lượng", 
+            color="Học lực", 
             orientation="h",
-            barnorm="percent", 
             text_auto='.1f',
-            color_discrete_sequence=px.colors.sequential.Blues,
-            labels={"gender_label": "Giới tính", "count": "Tỷ trọng (%)", "gpa": "Mức GPA"}
+            category_orders={"Học lực": gpa_order},
+            color_discrete_sequence=px.colors.sequential.Blues_r,
+            labels={"gender_label": "Giới tính", "Số lượng": "Tỷ trọng (%)"}
         )
-        # Ẩn tiêu đề trục X để giao diện gọn hơn
-        fig_bar.update_layout(xaxis_title=None, yaxis_title=None, margin=dict(l=0, r=0, t=30, b=0))
+        fig_bar.update_layout(
+            barmode='stack',
+            barnorm='percent',
+            xaxis_title="Tỷ lệ phần trăm (%)", 
+            yaxis_title=None, 
+            margin=dict(l=0, r=0, t=30, b=0)
+        )
         st.plotly_chart(fig_bar, use_container_width=True)
 
     with c2:
-        st.markdown("**Ma trận Mật độ: Thời gian Tự học và Điểm số**")
-        # Sử dụng Density Heatmap khắc phục Overplotting của Scatter Plot
+        st.markdown("**Ma trận Mật độ: Mối tương quan hành vi tự học và Học lực**")
+        
+        time_study_map = {1: "Dưới 2 giờ", 2: "2 - dưới 4 giờ", 3: "4 - dưới 6 giờ", 4: "6 - dưới 8 giờ", 5: "Trên 8 giờ"}
+        df['Thời gian tự học'] = df['time_studying'].map(time_study_map)
+        study_order = ["Dưới 2 giờ", "2 - dưới 4 giờ", "4 - dưới 6 giờ", "6 - dưới 8 giờ", "Trên 8 giờ"]
+
         fig_heat = px.density_heatmap(
             df, 
-            x="time_studying", 
-            y="gpa", 
+            x="Thời gian tự học", 
+            y="Học lực", 
+            category_orders={"Thời gian tự học": study_order, "Học lực": gpa_order},
             text_auto=True,
             color_continuous_scale="Blues",
-            labels={"time_studying": "Mức Thời gian Tự học (1-5)", "gpa": "Mức GPA (1-5)"}
+            labels={"Thời gian tự học": "Thời gian tự học trong ngày", "Học lực": "Phân hạng học lực"}
         )
         fig_heat.update_layout(margin=dict(l=0, r=0, t=30, b=0))
         st.plotly_chart(fig_heat, use_container_width=True)
