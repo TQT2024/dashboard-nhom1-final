@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 
 def draw_radar_chart(student_data, df_all):
-    """Biểu đồ Radar đa giác kép đồng bộ hệ màu Mint - Cam đất (Nén chiều cao height=280)"""
+    """Biểu đồ Radar đa giác kép đồng bộ hệ màu Mint - Cam đất (Tối ưu kích thước nhãn chữ và phóng to đa giác)"""
     # Tính toán giá trị trung bình toàn khóa làm tham chiếu nền
     mean_data = df_all[['index_tu_luc_scaled', 'index_moi_truong_truong_scaled', 'index_moi_truong_ban_be_scaled', 'gpa_scaled']].mean()
     
@@ -26,9 +26,9 @@ def draw_radar_chart(student_data, df_all):
     # 1. Đa giác cá nhân sinh viên - Tông xanh Mint thương hiệu
     fig.add_trace(go.Scatterpolar(
         r=sv_metrics, theta=categories, fill='toself', 
-        name=str(student_data['full_name']),
-        fillcolor='rgba(42, 157, 143, 0.2)', 
-        line=dict(color='#2a9d8f', width=2.5)
+        name='Cá nhân',
+        fillcolor='rgba(42, 157, 143, 0.25)', 
+        line=dict(color='#2a9d8f', width=3)
     ))
     
     # 2. Đa giác trung bình khóa - Tông Cam đất tương phản đối chiếu
@@ -36,18 +36,18 @@ def draw_radar_chart(student_data, df_all):
         r=mean_metrics, theta=categories, fill='toself', 
         name='Trung bình khóa',
         fillcolor='rgba(231, 111, 81, 0.02)', 
-        line=dict(color='#e76f51', width=1.5, dash='dash') 
+        line=dict(color='#e76f51', width=2, dash='dash') 
     ))
     
     fig.update_layout(
-        height=280, # NÉN CHÂN BIỂU ĐỒ XUỐNG 280PX ĐỂ KHÔNG BỊ TRÀN MAN HÌNH
+        height=320, # Tăng chiều cao tối ưu để đa giác bung rộng
         polar=dict(
-            radialaxis=dict(visible=True, range=[0, 100], showticklabels=True, tickfont=dict(size=8, color='gray')),
-            angularaxis=dict(tickfont=dict(size=10, color='#333'))
+            radialaxis=dict(visible=True, range=[0, 100], showticklabels=True, tickfont=dict(size=9, color='gray')),
+            angularaxis=dict(tickfont=dict(size=11, color='#222', weight='bold')) # Làm nét và đậm chữ tiêu chí
         ),
-        margin=dict(l=40, r=40, t=15, b=15),
+        margin=dict(l=50, r=50, t=20, b=20),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5, font=dict(size=9))
+        legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5, font=dict(size=10))
     )
     return fig
