@@ -2,67 +2,69 @@ import streamlit as st
 import os
 import sys
 
-# Khởi tạo đường dẫn hệ thống để nhận diện module cục bộ
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from modules.db import load_general_data
 from tabs.tab_general import render_tab_general
 from tabs.tab_individual import render_tab_individual
 
-st.set_page_config(
-    page_title="Phân tích các nhân tố ảnh hưởng đến sinh viên chuyên ngành và sau tốt nghiệp",
-    page_icon="🎓", layout="wide"
-)
+st.set_page_config(page_title="Dashboard Phân tích Sinh viên", layout="wide")
 
-# 1. Khởi tạo và nạp dữ liệu gốc vào bộ nhớ Session State để tối ưu hiệu năng
 if 'raw_df' not in st.session_state:
     try:
         st.session_state['raw_df'] = load_general_data()
     except Exception as e:
-        st.error(f"Lỗi kết nối cơ sở dữ liệu nền: {e}")
+        st.error(f"Lỗi truy xuất CSDL: {e}")
         st.stop()
 
 df = st.session_state['raw_df']
 
-# 2. Xây dựng khu vực bộ lọc vĩ mô tập trung trên thanh Sidebar
-st.sidebar.markdown("### 🔍 Bộ lọc hệ thống toàn cục")
-
-# Bộ lọc đa chọn cho Năm học / Trạng thái tốt nghiệp
+st.sidebar.markdown("### Bộ lọc hệ thống")
 available_years = sorted(df['year_label'].unique().tolist())
-selected_years = st.sidebar.multiselect(
-    "1. Chọn Năm học / Trạng thái:", 
-    options=available_years, 
-    default=available_years, 
-    key="global_years"
-)
+selected_years = st.sidebar.multiselect("Năm học:", options=available_years, default=available_years)
 
-# Bộ lọc đa chọn cho Giới tính sinh viên
 available_genders = sorted(df['gender_label'].unique().tolist())
-selected_genders = st.sidebar.multiselect(
-    "2. Chọn Giới tính:", 
-    options=available_genders, 
-    default=available_genders, 
-    key="global_genders"
-)
+selected_genders = st.sidebar.multiselect("Giới tính:", options=available_genders, default=available_genders)
 
-# 3. Xử lý cắt lọc dữ liệu động dựa trên cấu hình Sidebar
+# Xử lý chuỗi tiêu đề động
+if len(selected_years) == len(available_years) and len(selected_genders) == len(available_genders):
+    filter_suffix = "(Toàn khóa)"
+elif not selected_years or not selected_genders:
+    filter_suffix = ""
+else:
+    y_str = "Tất cả năm" if len(selected_years) == len(available_years) else ", ".join(selected_years)
+    g_str = "Tất cả giới" if len(selected_genders) == len(available_genders) else ", ".join(selected_genders)
+    filter_suffix = f"(Tệp: {g_str} | {y_str})"
+
+st.session_state['filter_suffix'] = filter_suffix
+
 df_filtered = df.copy()
 if selected_years:
     df_filtered = df_filtered[df_filtered['year_label'].isin(selected_years)]
 if selected_genders:
     df_filtered = df_filtered[df_filtered['gender_label'].isin(selected_genders)]
-
-# Lưu trữ tập dữ liệu sau lọc vào Session State để các tab nội bộ truy xuất đồng bộ
 st.session_state['filtered_df'] = df_filtered
 
-# 4. Thiết lập kiến trúc Tabs giao diện chính
-tab_options = ["Tổng quan dữ liệu nhóm", "Hồ sơ cá nhân sinh viên"]
-tab1, tab2 = st.tabs(tab_options)
+with st.sidebar.expander("ℹ️ Thang đo cấu hình dữ liệu", expanded=False):
+    st.markdown("""
+    <div style='font-size: 11px; color: gray;'>
+    <b>Thang phân loại GPA:</b><br>
+    • [1.0 - 2.0): Yếu<br>
+    • [2.0 - 2.5): Trung bình<br>
+    • [2.5 - 3.2): Khá<br>
+    • [3.2 - 3.6): Giỏi<br>
+    • [3.6 - 5.0]: Xuất sắc<br><br>
+    <b>Thang thời gian tự học:</b><br>
+    • [1.0 - 1.5): Dưới 2 giờ<br>
+    • [1.5 - 2.5): 2 - dưới 4 giờ<br>
+    • [2.5 - 3.5): 4 - dưới 6 giờ<br>
+    • [3.5 - 4.5): 6 - dưới 8 giờ<br>
+    • [4.5 - 5.0]: Trên 8 giờ
+    </div>
+    """, unsafe_allow_html=True)
 
-with tab1:
-    st.markdown("<h3 style='text-align: center; color:#2a9d8f; margin-bottom:20px;'>🎓 Phân tích các nhân tố ảnh hưởng đến sinh viên chuyên ngành và sau tốt nghiệp</h3>", unsafe_allow_html=True)
-    render_tab_general()
+st.markdown("<h3 style='text-align: center; color:#2a9d8f; margin-bottom:15px;'>Dashboard Phân Tích Các Nhân Tố Ảnh Hưởng Đến Kết Quả Học Tập</h3>", unsafe_allow_html=True)
 
-with tab2:
-    st.markdown("<h3 style='text-align: center; color:#2a9d8f; margin-bottom:20px;'>🎓 Phân tích các nhân tố ảnh hưởng đến sinh viên chuyên ngành và sau tốt nghiệp</h3>", unsafe_allow_html=True)
-    render_tab_individual()
+tab1, tab2 = st.tabs(["Tổng quan dữ liệu khối", "Hồ sơ cá nhân sinh viên"])
+with tab1: render_tab_general()
+with tab2: render_tab_individual()
