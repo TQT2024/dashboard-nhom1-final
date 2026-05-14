@@ -10,47 +10,39 @@ def render_tab_individual():
         st.warning("Hệ thống chưa tải được dữ liệu hồ sơ cá nhân. Vui lòng kiểm tra lại SQL View.")
         return
 
-    st.markdown("""
-        <style>
-        .block-container { padding-top: 1rem; padding-bottom: 1rem; }
-        .stAlert { padding: 10px 15px; border-radius: 8px; margin-bottom: 5px; }
-        </style>
-    """, unsafe_allow_html=True)
-
-    st.markdown("### Tra cứu chi tiết kết quả sinh viên")
-
-    # ==============================================================================
-    # NÂNG CẤP: HỆ THỐNG BỘ LỌC PHÂN CẤP TỐI ƯU UX (CASCADING SLICERS)
-    # ==============================================================================
-    col_f1, col_f2, col_f3 = st.columns(3)
-    
-    with col_f1:
-        year_options = ["Tất cả"] + list(df['year_label'].unique())
-        selected_year = st.selectbox("1. Hẹp theo Năm học:", options=year_options, index=0)
+    # Chỉ hiển thị bộ lọc trong Sidebar KHI VÀ CHỈ KHI người dùng đang đứng ở Tab 2
+    if st.session_state.get('active_tab') == "Hồ sơ cá nhân sinh viên":
+        st.sidebar.markdown("### 🛠️ Bộ lọc tra cứu cá nhân")
         
-    with col_f2:
+        # 1. Bộ lọc Năm học trong Sidebar
+        year_options = ["Tất cả"] + list(df['year_label'].unique())
+        selected_year = st.sidebar.selectbox("1. Hẹp theo Năm học:", options=year_options, index=0)
+        
+        # 2. Bộ lọc Giới tính trong Sidebar
         gender_options = ["Tất cả"] + list(df['gender_label'].unique())
-        selected_gender = st.selectbox("2. Hẹp theo Giới tính:", options=gender_options, index=0)
+        selected_gender = st.sidebar.selectbox("2. Hẹp theo Giới tính:", options=gender_options, index=0)
 
-    # Thao tác lọc Pandas ngầm dựa trên 2 bộ lọc phụ để thu hẹp tập ID sinh viên
-    df_filtered = df.copy()
-    if selected_year != "Tất cả":
-        df_filtered = df_filtered[df_filtered['year_label'] == selected_year]
-    if selected_gender != "Tất cả":
-        df_filtered = df_filtered[df_filtered['gender_label'] == selected_gender]
+        # Lọc dữ liệu ngầm để thu hẹp tập ID
+        df_filtered = df.copy()
+        if selected_year != "Tất cả":
+            df_filtered = df_filtered[df_filtered['year_label'] == selected_year]
+        if selected_gender != "Tất cả":
+            df_filtered = df_filtered[df_filtered['gender_label'] == selected_gender]
 
-    with col_f3:
-        # Danh sách mã sinh viên đã được co ngắn linh hoạt, tránh selectbox dài vô tận
+        # 3. Hộp chọn Mã sinh viên trong Sidebar
         student_list = df_filtered['student_id'].tolist()
         if not student_list:
-            st.error("Không có sinh viên nào khớp điều kiện lọc.")
+            st.sidebar.error("Không có sinh viên phù hợp.")
             return
-        selected_id = st.selectbox("3. Lựa chọn Mã Sinh viên (Student ID):", options=student_list, index=0)
+        selected_id = st.sidebar.selectbox("3. Lựa chọn Mã Sinh viên (Student ID):", options=student_list, index=0)
+    else:
+        # Nếu vô tình đứng ở Tab khác, không hiển thị gì trong Sidebar
+        return
 
-    # Trích xuất dữ liệu dòng của sinh viên được chọn từ bảng đã lọc
-    student_data = df_filtered[df_filtered['student_id'] == selected_id].iloc[0]
+    # Trích xuất dữ liệu dòng của sinh viên được chọn
+    student_data = df_filtered[df_filtered['student_id'] == selected_id].iloc
 
-    # Thẻ hiển thị định danh cá nhân
+    # Thẻ hiển thị định danh cá nhân nằm ngay đầu trang
     st.info(
         f"👤 **Họ và tên:** {student_data['full_name']} | "
         f"📧 **Email:** {student_data['email']} | "
@@ -63,7 +55,7 @@ def render_tab_individual():
 
     with col_chart:
         st.markdown("<p style='font-size:12px; font-weight: bold; margin-bottom:2px; color:#444;'>So sánh các chỉ số cá nhân với mức Trung bình khóa</p>", unsafe_allow_html=True)
-        # Gọi hàm vẽ từ module charts2 và khóa ẩn thanh Modebar xám phụ trợ
+        # Vẽ đa giác Radar khổng lồ phóng khoáng, khóa chặt Modebar xám
         st.plotly_chart(draw_radar_chart(student_data, df), width='stretch', config={'displayModeBar': False})
 
     with col_ai:
