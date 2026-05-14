@@ -1,8 +1,9 @@
 import streamlit as st
-import plotly.express as px
 import pandas as pd
 from modules.database import load_individual_data
 from modules.ai_mentor import generate_advice
+# GIỮ NGUYÊN ĐÚNG CHUẨN: Gọi từ module charts2 dành riêng cho Tab Cá nhân
+from modules.charts2 import draw_radar_chart
 
 def render_tab_individual():
     df = load_individual_data()
@@ -10,12 +11,20 @@ def render_tab_individual():
         st.warning("Hệ thống chưa tải được dữ liệu hồ sơ cá nhân. Vui lòng kiểm tra lại SQL View.")
         return
 
+    st.markdown("""
+        <style>
+        .block-container { padding-top: 1rem; padding-bottom: 1rem; }
+        div.stSelectbox { margin-bottom: -10px; }
+        .stAlert { padding: 8px 12px; border-radius: 6px; margin-bottom: -10px; }
+        </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("### Tra cứu chi tiết kết quả sinh viên")
 
     student_list = df['student_id'].tolist()
     selected_id = st.selectbox("Lựa chọn Mã Sinh viên (Student ID):", options=student_list, index=0)
 
-    student_data = df[df['student_id'] == selected_id].iloc[0]
+    student_data = df[df['student_id'] == selected_id].iloc
 
     st.info(
         f"👤 **Họ và tên:** {student_data['full_name']} | "
@@ -24,41 +33,15 @@ def render_tab_individual():
         f"📅 **Năm học:** {student_data['year_label']}"
     )
 
-    col_chart, col_ai = st.columns([1.2, 1])
+    st.write("") 
+    col_chart, col_ai = st.columns([1.1, 1])
 
     with col_chart:
-        st.markdown("**So sánh các chỉ số cá nhân với mức Trung bình khóa**")
-        mean_data = df[['index_tu_luc_scaled', 'index_moi_truong_truong_scaled', 'index_moi_truong_ban_be_scaled', 'gpa_scaled']].mean()
-        categories = ['Tự lực', 'Hỗ trợ từ Trường', 'Áp lực Bạn bè', 'Kết quả GPA']
-        
-        radar_df = pd.DataFrame({
-            'Chỉ_số': categories * 2,
-            'Điểm': [
-                float(student_data['index_tu_luc_scaled']), float(student_data['index_moi_truong_truong_scaled']), 
-                float(student_data['index_moi_truong_ban_be_scaled']), float(student_data['gpa_scaled']),
-                float(mean_data['index_tu_luc_scaled']), float(mean_data['index_moi_truong_truong_scaled']), 
-                float(mean_data['index_moi_truong_ban_be_scaled']), float(mean_data['gpa_scaled'])
-            ],
-            'Đối_tượng': ['Cá nhân'] * 4 + ['Trung bình khóa'] * 4
-        })
-
-        # Đã cấu hình mảng [0, 100] ngăn ngừa tuyệt đối lỗi cú pháp biên dịch
-        fig_radar = px.line_polar(
-            radar_df, r='Điểm', theta='Chỉ_số', color='Đối_tượng', line_close=True,
-            range_r=[0, 100], color_discrete_map={'Cá nhân': '#1f77b4', 'Trung bình khóa': '#7f7f7f'}
-        )
-        fig_radar.update_traces(line=dict(dash="dot", width=2), selector={"name": "Trung bình khóa"})
-        fig_radar.update_traces(line=dict(width=3.5), selector={"name": "Cá nhân"})
-        
-        fig_radar.update_layout(
-            polar=dict(radialaxis=dict(visible=True, showticklabels=True, tickfont=dict(size=9))),
-            margin=dict(l=50, r=50, t=30, b=30),
-            legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5)
-        )
-        st.plotly_chart(fig_radar, width='stretch')
+        st.markdown("<p style='font-size:12px; font-weight: bold; margin-bottom:2px; color:#444;'>So sánh các chỉ số cá nhân với mức Trung bình khóa</p>", unsafe_allow_html=True)
+        st.plotly_chart(draw_radar_chart(student_data, df), width='stretch', config={'displayModeBar': False})
 
     with col_ai:
-        st.markdown("**Nhận xét và Đề xuất**")
+        st.markdown("<p style='font-size:12px; font-weight: bold; margin-bottom:2px; color:#444;'>Nhận xét và Đề xuất</p>", unsafe_allow_html=True)
         
         if 'ai_mentor_cache' not in st.session_state:
             st.session_state['ai_mentor_cache'] = {}
@@ -84,6 +67,7 @@ def render_tab_individual():
         st.caption(caption_log)
         st.success(current_advice)
         
-        st.markdown("---")
+        st.markdown("<div style='margin-top:-5px; margin-bottom:5px;'><hr style='margin:0; border-top: 1px solid #e2e8f0;'/></div>", unsafe_allow_html=True)
+        
         export_df = pd.DataFrame([{"Mã SV": student_data['student_id'], "Họ tên": student_data['full_name'], "GPA Quy đổi": f"{student_data['gpa_scaled']:.1f}/100", "Nhận xét": current_advice}])
         st.download_button(label="📥 Tải báo cáo kết quả học tập cá nhân (.csv)", data=export_df.to_csv(index=False).encode('utf-8-sig'), file_name=f"Bao_cao_SV_{student_data['student_id']}.csv", mime="text/csv")

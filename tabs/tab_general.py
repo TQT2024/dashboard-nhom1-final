@@ -1,5 +1,6 @@
 import streamlit as st
 from modules.database import load_general_data
+# ĐÃ ĐỒNG BỘ: Gọi chuẩn xác từ module charts gốc cho Tab General
 from modules.charts import draw_pie_chart, draw_stacked_bar, draw_line_chart, draw_policy_bar, draw_scatter_plot, draw_density_heatmap
 
 def render_tab_general():
@@ -8,7 +9,6 @@ def render_tab_general():
         st.warning("Hệ thống chưa tải được dữ liệu. Vui lòng kiểm tra kết nối cơ sở dữ liệu.")
         return
 
-    # Nhúng CSS làm sáng nền nhẹ toàn bộ dashboard và thiết lập hiệu ứng đổ bóng hộp chỉ số
     st.markdown("""
         <style>
         .stMetric {
@@ -22,7 +22,6 @@ def render_tab_general():
         </style>
     """, unsafe_allow_html=True)
 
-    # Bộ lọc động trên đầu trang
     col_f1, col_f2 = st.columns(2)
     with col_f1:
         selected_years = st.multiselect("Lọc theo Năm học / Trạng thái:", options=df['year_label'].unique(), default=df['year_label'].unique())
@@ -35,7 +34,6 @@ def render_tab_general():
         st.warning("Không có dữ liệu phù hợp với tiêu chí bộ lọc đã chọn.")
         return
 
-    # Xử lý logic tiêu đề động chuẩn BI sạch dấu ngoặc mảng
     if len(selected_genders) == 0 or len(selected_genders) == len(df['gender_label'].unique()):
         gender_title_text = "Toàn khối"
     else:
@@ -49,9 +47,6 @@ def render_tab_general():
     st.markdown(f"<h5 style='color:#2a9d8f; margin-top:10px;'>📊 Kết quả phân tích tổng quan nhóm {gender_title_text} ({year_title_text})</h5>", unsafe_allow_html=True)
     st.write("")
 
-    # ==============================================================================
-    # HÀNG 1: TỰ ĐỘNG CO GIÃN KHUNG LƯỚI KHỬ MÂU THUẪN LẶP BIỂU ĐỒ (DASHBOARD RE-LAYOUT)
-    # ==============================================================================
     if len(selected_genders) == 1:
         c1_h1, c2_h1 = st.columns([1, 2.5])
         with c1_h1:
@@ -88,9 +83,6 @@ def render_tab_general():
 
     st.markdown("<div style='margin-top:-10px; margin-bottom:15px;'><hr style='margin:0; border-top: 1px solid #e2e8f0;'/></div>", unsafe_allow_html=True)
 
-    # ==============================================================================
-    # HÀNG 2: XU HƯỚNG VÀ MA TRẬN MẬT ĐỘ TƯƠNG QUAN KHÓA CHẶT MODEBAR
-    # ==============================================================================
     c1_h2, c2_h2, c3_h2 = st.columns(3)
     
     with c1_h2:

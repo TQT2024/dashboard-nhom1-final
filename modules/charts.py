@@ -14,44 +14,34 @@ def _prepare_labels(df):
     return d
 
 def draw_pie_chart(df):
+    """Cấu phần học lực toàn khối - Đã đồng bộ đơn sắc thương hiệu, đẩy số lên đỉnh cột"""
     d = _prepare_labels(df)
     df_pie = d.groupby('Học lực').size().reset_index(name='Số lượng')
     
-    fig = px.pie(
-        df_pie, values='Số lượng', names='Học lực',
-        category_orders={"Học lực": gpa_order},
-        color_discrete_sequence=px.colors.sequential.Blues_r
+    fig = px.bar(
+        df_pie, x="Học lực", y="Số lượng", text_auto=True,
+        category_orders={"Học lực": gpa_order}
     )
-    fig.update_layout(margin=dict(l=10, r=10, t=10, b=10), legend=dict(orientation="h", y=-0.1))
+    fig.update_traces(textposition='outside', marker_color='#2a9d8f', marker_line_color='rgba(0,0,0,0)')
+    fig.update_layout(
+        height=330, xaxis_title=None, yaxis_title="Số sinh viên", 
+        showlegend=False, margin=dict(l=20, r=20, t=20, b=0),
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)'
+    )
     return fig
 
 def draw_stacked_bar(df):
-    """Đã tích hợp cơ chế Tự động chuyển đổi biểu đồ (Chart Switching) tránh gây hiểu lầm"""
+    """Cấu trúc học lực phân hạng so sánh liên giới tính"""
     d = _prepare_labels(df)
-    unique_genders = d['gender_label'].unique()
-    
-    # NẾU CHỈ LỌC 1 GIỚI TÍNH: Chuyển sang biểu đồ cột đứng phân phối số lượng học lực
-    if len(unique_genders) == 1:
-        df_bar = d.groupby('Học lực').size().reset_index(name='Số lượng')
-        fig = px.bar(
-            df_bar, x="Học lực", y="Số lượng",
-            text_auto=True,
-            category_orders={"Học lực": gpa_order},
-            color="Học lực",
-            color_discrete_sequence=px.colors.sequential.Blues_r,
-            labels={"Số lượng": "Số lượng sinh viên"}
-        )
-        fig.update_layout(xaxis_title=None, yaxis_title="Số sinh viên", showlegend=False, margin=dict(l=0, r=0, t=10, b=0))
-    else:
-        # NẾU CÓ CẢ 2 GIỚI TÍNH: Giữ nguyên cột chồng nằm ngang 100%
-        df_bar = d.groupby(['gender_label', 'Học lực']).size().reset_index(name='Số lượng')
-        fig = px.bar(
-            df_bar, y="gender_label", x="Số lượng", color="Học lực", orientation="h",
-            text_auto='.1f', category_orders={"Học lực": gpa_order},
-            color_discrete_sequence=px.colors.sequential.Blues_r,
-            labels={"gender_label": "Giới tính", "Số lượng": "Tỷ trọng (%)"}
-        )
-        fig.update_layout(barmode='stack', barnorm='percent', xaxis_title="Tỷ lệ (%)", yaxis_title=None, margin=dict(l=0, r=0, t=10, b=0))
+    df_bar = d.groupby(['gender_label', 'Học lực']).size().reset_index(name='Số lượng')
+    fig = px.bar(
+        df_bar, y="gender_label", x="Số lượng", color="Học lực", orientation="h",
+        text_auto='.1f', category_orders={"Học lực": gpa_order},
+        color_discrete_sequence=px.colors.sequential.YlGnBu_r,
+        labels={"gender_label": "Giới tính", "Số lượng": "Tỷ trọng (%)"}
+    )
+    fig.update_traces(textposition='auto')
+    fig.update_layout(height=310, barmode='stack', barnorm='percent', xaxis_title="Tỷ lệ %", yaxis_title=None, margin=dict(l=0, r=0, t=20, b=0), showlegend=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
 
 def draw_line_chart(df):
@@ -62,10 +52,24 @@ def draw_line_chart(df):
     
     fig = px.line(
         df_line, x="year_label", y="gpa_scaled", markers=True,
-        labels={"year_label": "Tiến trình năm học", "gpa_scaled": "GPA Quy đổi (Trung bình)"}
+        labels={"year_label": "Giai đoạn học", "gpa_scaled": "Điểm quy đổi (Trung bình)"}
     )
-    fig.update_traces(line_color='#1f77b4', line_width=3, marker=dict(size=8))
-    fig.update_layout(margin=dict(l=0, r=0, t=10, b=0))
+    fig.update_traces(line_color='#2a9d8f', line_width=3, marker=dict(size=8, color='#2a9d8f'))
+    fig.update_layout(height=320, margin=dict(l=10, r=10, t=20, b=10), yaxis=dict(range=[0, 100]), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_xaxes(showgrid=True, gridcolor='#f0f0f0')
+    fig.update_yaxes(showgrid=True, gridcolor='#f0f0f0')
+    return fig
+
+def draw_policy_bar(df):
+    """Biểu đồ dự phòng diện chính sách của Tab General"""
+    df_policy = df.groupby('policy_label')['gpa_scaled'].mean().reset_index()
+    fig = px.bar(
+        df_policy, x="policy_label", y="gpa_scaled", text_auto='.1f',
+        color="policy_label", color_discrete_sequence=['#2a9d8f', '#94d2bd'],
+        labels={"policy_label": "Diện chính sách", "gpa_scaled": "Điểm quy đổi (Trung bình)"}
+    )
+    fig.update_layout(height=320, xaxis_title=None, yaxis_title="Điểm bình quân", showlegend=False, margin=dict(l=0, r=0, t=20, b=0), yaxis=dict(range=[0, 100]), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_yaxes(showgrid=True, gridcolor='#f0f0f0')
     return fig
 
 def draw_scatter_plot(df):
@@ -75,10 +79,12 @@ def draw_scatter_plot(df):
     fig = px.scatter(
         df_scatter, x="Thời gian tự học", y="Học lực", size="Mật độ SV", color="Mật độ SV",
         category_orders={"Thời gian tự học": study_order, "Học lực": gpa_order},
-        color_continuous_scale="Blues", size_max=40,
-        labels={"Thời gian tự học": "Thời gian tự học/ngày", "Học lực": "Học lực"}
+        color_continuous_scale="YlGnBu", size_max=35,
+        labels={"Thời gian tự học " : "Thời gian tự học trong ngày", "Học lực": "Học lực"}
     )
-    fig.update_layout(margin=dict(l=0, r=0, t=10, b=0), coloraxis_showscale=False)
+    fig.update_xaxes(showgrid=True, gridcolor='#eef0f2', range=[-0.5, 4.5])
+    fig.update_yaxes(showgrid=True, gridcolor='#eef0f2', range=[-0.5, 4.5])
+    fig.update_layout(height=320, margin=dict(l=0, r=0, t=20, b=0), coloraxis_showscale=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
 
 def draw_density_heatmap(df):
@@ -86,8 +92,10 @@ def draw_density_heatmap(df):
     fig = px.density_heatmap(
         d, x="Thời gian tự học", y="Học lực", 
         category_orders={"Thời gian tự học": study_order, "Học lực": gpa_order},
-        text_auto=True, color_continuous_scale="Blues",
-        labels={"Thời gian tự học": "Thời gian tự học/ngày", "Học lực": "Học lực"}
+        text_auto=True, color_continuous_scale="YlGnBu",
+        labels={"Thời gian tự học": "Thời gian tự học trong ngày", "Học lực": "Học lực"}
     )
-    fig.update_layout(margin=dict(l=0, r=0, t=10, b=0))
+    fig.update_xaxes(range=[-0.5, 4.5])
+    fig.update_yaxes(range=[-0.5, 4.5])
+    fig.update_layout(height=320, margin=dict(l=0, r=0, t=20, b=0), coloraxis_showscale=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
