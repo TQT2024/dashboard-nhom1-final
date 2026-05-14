@@ -10,17 +10,16 @@ from tabs.tab_individual import render_tab_individual
 
 # Cấu hình trang bắt buộc phải là lệnh Streamlit đầu tiên
 st.set_page_config(
-    page_title="Hệ Thống Giám Sát Sinh Viên AI",
+    page_title="Phân tích các nhân tố ảnh hưởng đến sinh viên chuyên ngành và sau tốt nghiệp",
     page_icon="🎓",
     layout="wide"
 )
 
-st.title("🎓 HỆ THỐNG GIÁM SÁT VÀ HỖ TRỢ RA QUYẾT ĐỊNH SINH VIÊN")
-st.markdown("*Kiến trúc Modular Dashboard tích hợp Hệ cố vấn AI cá nhân hóa*")
+st.title("🎓 Phân tích các nhân tố ảnh hưởng đến sinh viên chuyên ngành và sau tốt nghiệp")
 st.write("---")
 
-# Khởi tạo thanh điều hướng các Tab giao diện
-tab1, tab2 = st.tabs(["📊 Phân Tích Nhóm (General)", "🔍 Tra Cứu Cá Nhân (Individual Drill-down)"])
+# Khởi tạo thanh điều hướng các Tab giao diện theo quy tắc tinh giản
+tab1, tab2 = st.tabs(["Tổng quan dữ liệu nhóm", "Hồ sơ cá nhân sinh viên"])
 
 with tab1:
     render_tab_general()
