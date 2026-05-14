@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from modules.database import load_individual_data
 from modules.ai_mentor import generate_advice
-# GIỮ NGUYÊN ĐÚNG CHUẨN: Gọi từ module charts2 dành riêng cho Tab Cá nhân
+# Gọi chính xác từ module charts2 dành riêng cho Tab Cá nhân
 from modules.charts2 import draw_radar_chart
 
 def render_tab_individual():
@@ -11,6 +11,7 @@ def render_tab_individual():
         st.warning("Hệ thống chưa tải được dữ liệu hồ sơ cá nhân. Vui lòng kiểm tra lại SQL View.")
         return
 
+    # Nhúng CSS tối giản lề đệm để thắt chặt không gian hiển thị, ép vừa vặn 1 trang
     st.markdown("""
         <style>
         .block-container { padding-top: 1rem; padding-bottom: 1rem; }
@@ -24,7 +25,8 @@ def render_tab_individual():
     student_list = df['student_id'].tolist()
     selected_id = st.selectbox("Lựa chọn Mã Sinh viên (Student ID):", options=student_list, index=0)
 
-    student_data = df[df['student_id'] == selected_id].iloc
+    # ĐÃ SỬA LỖI: Bổ sung chỉ mục [0] vào sau .iloc để định vị chính xác 1 dòng dữ liệu sinh viên
+    student_data = df[df['student_id'] == selected_id].iloc[0]
 
     st.info(
         f"👤 **Họ và tên:** {student_data['full_name']} | "
@@ -59,9 +61,9 @@ def render_tab_individual():
                 advice = generate_advice(safe_student_info)
                 st.session_state['ai_mentor_cache'][selected_id] = advice
                 st.session_state['current_student'] = selected_id
-                caption_log = "Kết quả phân tích"
+                caption_log = "Result"
         else:
-            caption_log = "Kết quả truy xuất"
+            caption_log = "Cache"
 
         current_advice = st.session_state['ai_mentor_cache'].get(selected_id, "Chưa có nhận xét.")
         st.caption(caption_log)
