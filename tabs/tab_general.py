@@ -11,11 +11,8 @@ def render_tab_general():
 
     st.markdown("### Chỉ số Tổng hợp Giai đoạn Chuyên sâu (KPIs)")
     
-    # 1. SỬA LỖI TÊN CỘT ĐỂ TÍNH TOÁN KPI CHÍNH XÁC
     total_students = len(df)
-    # Tính điểm trung bình dựa trên thang 5 gốc (gpa_raw)
     avg_gpa_raw = df['gpa_raw'].mean()
-    # Tính tỷ lệ học lực Khá/Giỏi bằng gpa_raw (mức 4 và 5 tương ứng Khá và Giỏi trở lên)
     ratio_good = (len(df[df['gpa_raw'] >= 4]) / total_students) * 100 if total_students > 0 else 0
 
     col1, col2, col3 = st.columns(3)
@@ -25,45 +22,44 @@ def render_tab_general():
 
     st.markdown("---")
 
-    # Bố cục không gian hiển thị 2 biểu đồ
     c1, c2 = st.columns(2)
 
     with c1:
         st.markdown("**So sánh Cấu trúc Học lực theo Giới tính (Hóa giải mẫu lệch 1:9)**")
         
-        # Ánh xạ mã số học lực sang văn bản để biểu đồ hiển thị nhãn chuyên nghiệp
         gpa_map = {1: "Yếu (<2.0)", 2: "Trung bình (2.0-2.5)", 3: "Khá (2.5-3.2)", 4: "Giỏi (3.2-3.6)", 5: "Xuất sắc (>3.6)"}
         df['Học lực'] = df['gpa_raw'].map(gpa_map)
         gpa_order = ["Yếu (<2.0)", "Trung bình (2.0-2.5)", "Khá (2.5-3.2)", "Giỏi (3.2-3.6)", "Xuất sắc (>3.6)"]
 
-        # Phân nhóm tính tỷ lệ cấu trúc
         df_gender_gpa = df.groupby(['gender_label', 'Học lực']).size().reset_index(name='Số lượng')
         
-        # 2. SỬA THAM SỐ COLOR THÀNH NHÃN MỚI TẠO ĐỂ ĐỒNG BỘ
         fig_bar = px.bar(
             df_gender_gpa, 
             y="gender_label", 
             x="Số lượng", 
             color="Học lực", 
             orientation="h",
-            barnorm="percent", 
             text_auto='.1f',
             category_orders={"Học lực": gpa_order},
             color_discrete_sequence=px.colors.sequential.Blues_r,
             labels={"gender_label": "Giới tính", "Số lượng": "Tỷ trọng (%)"}
         )
-        fig_bar.update_layout(xaxis_title="Tỷ lệ phần trăm (%)", yaxis_title=None, margin=dict(l=0, r=0, t=30, b=0))
+        fig_bar.update_layout(
+            barmode='stack',
+            barnorm='percent',
+            xaxis_title="Tỷ lệ phần trăm (%)", 
+            yaxis_title=None, 
+            margin=dict(l=0, r=0, t=30, b=0)
+        )
         st.plotly_chart(fig_bar, use_container_width=True)
 
     with c2:
         st.markdown("**Ma trận Mật độ: Mối tương quan hành vi tự học và Học lực**")
         
-        # Ánh xạ nhãn thời gian học để trục X biểu đồ hiển thị rõ ràng chữ thay vì số 1-5
         time_study_map = {1: "Dưới 2 giờ", 2: "2 - dưới 4 giờ", 3: "4 - dưới 6 giờ", 4: "6 - dưới 8 giờ", 5: "Trên 8 giờ"}
         df['Thời gian tự học'] = df['time_studying'].map(time_study_map)
         study_order = ["Dưới 2 giờ", "2 - dưới 4 giờ", "4 - dưới 6 giờ", "6 - dưới 8 giờ", "Trên 8 giờ"]
 
-        # 3. SỬA THAM SỐ X VÀ Y KHỚP VỚI BIẾN CẤU TRÚC VÀ CỘT DATABASE
         fig_heat = px.density_heatmap(
             df, 
             x="Thời gian tự học", 
