@@ -68,9 +68,10 @@ def draw_density_heatmap(df, suffix=""):
         category_orders={"Thời gian tự học": study_order, "Học lực": gpa_order},
         text_auto=True, color_continuous_scale=PALETTE_SEQ
     )
-    # Hiển thị dải màu nằm ngang, ghi đè margin-bottom để không đè lên trục X
+    # SỬA LỖI: Nạp COMMON_LAYOUT trước để thiết lập khung nền và font chữ
+    fig.update_layout(**COMMON_LAYOUT)
+    # Gọi tiếp lệnh update thứ hai để ghi đè thuộc tính lề dưới b=70 và chèn dải màu an toàn
     fig.update_layout(
-        **COMMON_LAYOUT, 
         title=f"Ma trận mật độ hành vi Tự học vs Học lực {suffix}",
         coloraxis_colorbar=dict(
             title="Số lượng SV",
@@ -92,9 +93,10 @@ def draw_scatter_plot(df, suffix=""):
         labels={"index_tu_luc_scaled": "Năng lực Tự lực học tập", "gpa_scaled": "Kết quả điểm tích lũy GPA"}
     )
     fig.update_traces(marker=dict(size=12, opacity=0.6))
-    # Hiển thị dải màu nằm ngang, ép tickvals từ 1-5, ghi đè margin-bottom
+    # SỬA LỖI: Nạp COMMON_LAYOUT trước để đồng bộ các cấu phần
+    fig.update_layout(**COMMON_LAYOUT)
+    # Ghi đè cấu hình trục tọa độ khóa và dải vạch chia rời rạc hệ 1-5 mà không đè từ khóa margin
     fig.update_layout(
-        **COMMON_LAYOUT, 
         title=f"Phân tán tương quan Tự học vs GPA {suffix}", 
         xaxis=dict(range=[0, 105]), 
         yaxis=dict(range=[0, 105]),
