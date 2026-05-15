@@ -33,9 +33,9 @@ def render_tab_individual():
 
     st.markdown("<hr style='margin: 10px 0 20px 0;'>", unsafe_allow_html=True)
 
-    col_left, col_right = st.columns([1, 2])
+    # ================= HÀNG 1: DỮ LIỆU TĨNH & BIỂU ĐỒ =================
+    col_left, col_right = st.columns([1, 1.5]) # Mở rộng cột phải cho Radar Chart
 
-    # ================= CỘT TRÁI: DỮ LIỆU TĨNH + AI =================
     with col_left:
         st.markdown("<p style='font-size:15px; font-weight:bold; color:#e76f51; margin-bottom:5px;'>Hồ sơ hành chính</p>", unsafe_allow_html=True)
         st.markdown(f"""
@@ -56,62 +56,45 @@ def render_tab_individual():
         • Áp lực bạn bè: <b>{student_data['index_moi_truong_ban_be_scaled']:.1f}</b>
         </div>
         """, unsafe_allow_html=True)
-        
-        with st.expander("Phương pháp chuẩn hóa chỉ số"):
-            st.latex(r"\text{Chỉ số}_{100} = \text{Likert}_{1-5} \times 20")
 
-        # ĐÃ DI DỜI KHỐI AI SANG CỘT TRÁI ĐỂ LẤP KHOẢNG TRỐNG
-        st.markdown("<p style='font-size:15px; font-weight:bold; color:#2a9d8f; margin:15px 0 5px 0;'>Cố vấn học thuật AI</p>", unsafe_allow_html=True)
-        
-        if st.button("Tạo báo cáo tự động", use_container_width=True):
-            api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
-            if not api_key:
-                st.error("Chưa cấu hình API Key.")
-            else:
-                with st.spinner("Đang xử lý thuật toán phân tích..."):
-                    try:
-                        client = genai.Client(api_key=api_key)
-                        config = types.GenerateContentConfig(
-                            system_instruction=(
-                                "Bạn là chuyên gia phân tích dữ liệu giáo dục. Đánh giá dựa trên 4 chỉ số (Thang 100). "
-                                "Tuyệt đối KHÔNG dùng định dạng Markdown (không dùng dấu gạch ngang hay dấu sao). "
-                                "Chỉ trả về nội dung bằng mã HTML thuần túy theo đúng cấu trúc sau: "
-                                "<b>Điểm mạnh nổi bật:</b> [Viết 1 câu trọn vẹn]<br><br>"
-                                "<b>Hạn chế cốt lõi:</b> [Viết 1 câu trọn vẹn]<br><br>"
-                                "<b>Giải pháp hành động:</b> [Viết 1 câu trọn vẹn]"
-                            ),
-                            temperature=0.2,
-                            max_output_tokens=500
-                        )
-                        
-                        prompt = f"GPA: {student_data['gpa_scaled']}, Tự lực: {student_data['index_tu_luc_scaled']}, Trường: {student_data['index_moi_truong_truong_scaled']}, Bạn bè: {student_data['index_moi_truong_ban_be_scaled']}."
-                        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt, config=config)
-                        
-                        # Khung Auto-expand, đồng bộ màu Xanh Mint, hiển thị 100% nội dung HTML
-                        custom_box = f"""
-                        <div style="background-color: #f0f7f6; padding: 15px; border-radius: 5px; border-left: 4px solid #2a9d8f; font-size: 14px; line-height: 1.6; color: #222;">
-                            {response.text.strip()}
-                        </div>
-                        """
-                        st.markdown(custom_box, unsafe_allow_html=True)
-                        
-                    except Exception as ex:
-                        fallback_box = f"""
-                        <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffeeba; font-size: 14px; line-height: 1.6; color: #856404;">
-                            <b>Cảnh báo (Fallback):</b> API gián đoạn ({ex}).<br><br>
-                            Hệ thống ghi nhận GPA hiện tại: {student_data['gpa_scaled']:.1f}.<br>
-                            Đề xuất: Tập trung cải thiện các chỉ số có tỷ trọng thấp.
-                        </div>
-                        """
-                        st.markdown(fallback_box, unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div style="background-color: #fafafa; padding: 15px; border-radius: 5px; border: 1px dashed #ccc; font-size: 13px; color: gray; text-align: center;">
-                Nhấn nút để AI phân tích.
-            </div>
-            """, unsafe_allow_html=True)
-
-    # ================= CỘT PHẢI: TRỰC QUAN HÓA =================
     with col_right:
         st.markdown("<p style='font-size:16px; font-weight:bold; color:#2a9d8f; text-align:center;'>Đối chuẩn đa giác Radar</p>", unsafe_allow_html=True)
         st.plotly_chart(draw_radar_chart(student_data, df_profile_all), use_container_width=True, config={'displayModeBar': False})
+
+    # ================= HÀNG 2: CÔNG CỤ CHUYÊN SÂU (NẰM DỌC TRÀN VIỀN) =================
+    st.markdown("<hr style='margin: 5px 0 15px 0;'>", unsafe_allow_html=True)
+    
+    with st.expander("🔍 Phương pháp chuẩn hóa chỉ số (Cơ sở toán học)"):
+        st.latex(r"\text{Chỉ số}_{100} = \text{Likert}_{1-5} \times 20")
+        st.caption("Mọi chỉ số hành vi được tịnh tiến tuyến tính để đồng bộ không gian đo lường với thang điểm GPA.")
+
+    st.markdown("<p style='font-size:15px; font-weight:bold; color:#2a9d8f; margin:10px 0 5px 0;'>Cố vấn học thuật AI (Gemini Flash)</p>", unsafe_allow_html=True)
+    
+    if st.button("Kích hoạt Phân tích tự động", use_container_width=True):
+        api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            st.error("Chưa cấu hình API Key.")
+        else:
+            with st.spinner("Đang biên dịch thuật toán phân tích..."):
+                try:
+                    client = genai.Client(api_key=api_key)
+                    config = types.GenerateContentConfig(
+                        system_instruction=(
+                            "Bạn là chuyên gia phân tích dữ liệu giáo dục. Đánh giá dựa trên 4 chỉ số (Thang 100). "
+                            "Trả lời NGẮN GỌN bằng định dạng Markdown. Bắt buộc trình bày theo 3 ý chính: "
+                            "- **Điểm mạnh nổi bật:** ...\n"
+                            "- **Hạn chế cốt lõi:** ...\n"
+                            "- **Giải pháp hành động:** ..."
+                        ),
+                        temperature=0.3,
+                        max_output_tokens=1024 # Giải phóng không gian token để AI không bao giờ bị cụt câu
+                    )
+                    
+                    prompt = f"GPA: {student_data['gpa_scaled']}, Tự lực: {student_data['index_tu_luc_scaled']}, Trường: {student_data['index_moi_truong_truong_scaled']}, Bạn bè: {student_data['index_moi_truong_ban_be_scaled']}."
+                    response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt, config=config)
+                    
+                    # Sử dụng thành phần Bản địa st.success -> Khung Xanh Lá đẹp mắt, tự động co giãn 100% không mất chữ
+                    st.success(response.text.strip(), icon="💡")
+                    
+                except Exception as ex:
+                    st.warning(f"Cảnh báo (Fallback): API gián đoạn ({ex}). Hệ thống ghi nhận GPA hiện tại: {student_data['gpa_scaled']:.1f}. Đề xuất sinh viên bám sát cố vấn học tập.")
