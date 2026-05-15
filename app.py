@@ -10,7 +10,6 @@ from tabs.tab_individual import render_tab_individual
 
 st.set_page_config(
     page_title="Dashboard Phân tích Sinh viên",
-    page_icon="🎓",
     layout="wide"
 )
 
@@ -25,10 +24,10 @@ df = st.session_state['raw_df']
 
 st.sidebar.header("BỘ LỌC")
 available_years = sorted(df['year_label'].unique().tolist())
-selected_years = st.sidebar.multiselect("Giai đoạn học tập:", options=available_years, default=available_years)
+selected_years = st.sidebar.multiselect("Niên khoá:", options=available_years, default=available_years)
 
 available_genders = sorted(df['gender_label'].unique().tolist())
-selected_genders = st.sidebar.multiselect("Giới tính sinh viên:", options=available_genders, default=available_genders)
+selected_genders = st.sidebar.multiselect("Giới tính:", options=available_genders, default=available_genders)
 
 total_y, total_g = len(available_years), len(available_genders)
 if len(selected_years) == total_y and len(selected_genders) == total_g:
@@ -49,7 +48,7 @@ if selected_genders:
     df_filtered = df_filtered[df_filtered['gender_label'].isin(selected_genders)]
 st.session_state['filtered_df'] = df_filtered
 
-with st.sidebar.expander("ℹ️ THÔNG TIN THANG ĐO & CHUẨN HÓA", expanded=False):
+with st.sidebar.expander("THÔNG TIN THANG ĐO & CHUẨN HÓA", expanded=False):
     st.markdown("""
     **Phương pháp:** Chuyển đổi tuyến tính từ thang Likert (1-5) sang thang điểm 100.
     
@@ -67,7 +66,7 @@ with st.sidebar.expander("ℹ️ THÔNG TIN THANG ĐO & CHUẨN HÓA", expanded=
 
 st.markdown(f"<h2 style='text-align: center; color:#2a9d8f;'>PHÂN TÍCH CÁC NHÂN TỐ ẢNH HƯỞNG ĐẾN KẾT QUẢ HỌC TẬP</h2>", unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs(["PHÂN TÍCH TỔNG QUAN", "HỒ SƠ & TRỢ LÝ AI"])
+tab1, tab2 = st.tabs(["Phân tích tổng quan", "Phân tích hồ sơ cá nhân"])
 
 with tab1:
     render_tab_general()
