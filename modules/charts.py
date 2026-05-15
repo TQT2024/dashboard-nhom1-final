@@ -80,7 +80,7 @@ def draw_scatter_plot(df, suffix=""):
         labels={"index_tu_luc_scaled": "Năng lực Tự lực học tập", "gpa_scaled": "Kết quả điểm tích lũy GPA"}
     )
     fig.update_traces(marker=dict(size=12, opacity=0.6))
-    fig.update_layout(**COMMON_LAYOUT, title=f"Phân tán tương quan Tự lực vs GPA {suffix}", xaxis=dict(range=[0, 105]), yaxis=dict(range=[0, 105]), coloraxis_showscale=False)
+    fig.update_layout(**COMMON_LAYOUT, title=f"Phân tán tương quan Tự học vs GPA {suffix}", xaxis=dict(range=[0, 105]), yaxis=dict(range=[0, 105]), coloraxis_showscale=False)
     return fig
 
 def draw_stacked_bar(df, suffix=""):
