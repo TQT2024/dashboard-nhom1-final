@@ -9,7 +9,7 @@ from tabs.tab_general import render_tab_general
 from tabs.tab_individual import render_tab_individual
 
 st.set_page_config(
-    page_title="Hệ thống Phân tích Học vụ và Cố vấn AI",
+    page_title="Dashboard phân tích các yếu tố ảnh hưởng đến GPA của sinh viên",
     layout="wide"
 )
 
@@ -52,7 +52,7 @@ else:
 
 st.session_state['filter_suffix'] = filter_suffix
 
-with st.sidebar.expander("ℹ️ Thang đo và Phương pháp chuẩn hóa", expanded=False):
+with st.sidebar.expander("Thang đo và Phương pháp chuẩn hóa", expanded=False):
     st.markdown("""
     **Phương pháp:** Chuyển đổi tuyến tính từ thang đo khảo sát Likert (1-5) sang thang điểm 100 hệ thống.
 
@@ -67,9 +67,8 @@ with st.sidebar.expander("ℹ️ Thang đo và Phương pháp chuẩn hóa", exp
     
     **Công thức:** $X_{scaled} = X_{likert} \\times 20$
     """)
-    st.caption("Điểm học tập tích lũy (GPA) cũng được quy đổi đồng bộ về thang 100 để tiến hành đối chuẩn đa giác.")
 
-st.markdown(f"<h2 style='text-align: center; color:#2a9d8f; font-weight: bold; margin-bottom: 25px;'>Dashboard Phân tích Hiệu suất Học tập và Cố vấn Học vụ Sinh viên</h2>", unsafe_allow_html=True)
+st.markdown(f"<h2 style='text-align: center; color:#2a9d8f; font-weight: bold; margin-bottom: 25px;'>Dashboard phân tích các yếu tố ảnh hưởng đến GPA của sinh viên</h2>", unsafe_allow_html=True)
 
 tab1, tab2 = st.tabs(["Phân tích tổng quan nhóm", "Tra cứu hồ sơ cá nhân"])
 
