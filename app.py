@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import sys
 
-# Khởi tạo đường dẫn hệ thống
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from modules.db import load_general_data
@@ -15,7 +14,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Nạp dữ liệu gốc (Cache 1 giờ)
 if 'raw_df' not in st.session_state:
     try:
         st.session_state['raw_df'] = load_general_data()
@@ -25,7 +23,6 @@ if 'raw_df' not in st.session_state:
 
 df = st.session_state['raw_df']
 
-# --- SIDEBAR BỘ LỌC ---
 st.sidebar.header("BỘ LỌC")
 available_years = sorted(df['year_label'].unique().tolist())
 selected_years = st.sidebar.multiselect("Giai đoạn học tập:", options=available_years, default=available_years)
@@ -33,7 +30,6 @@ selected_years = st.sidebar.multiselect("Giai đoạn học tập:", options=ava
 available_genders = sorted(df['gender_label'].unique().tolist())
 selected_genders = st.sidebar.multiselect("Giới tính sinh viên:", options=available_genders, default=available_genders)
 
-# Xử lý Logic Tiêu đề động
 total_y, total_g = len(available_years), len(available_genders)
 if len(selected_years) == total_y and len(selected_genders) == total_g:
     filter_suffix = "(Toàn khóa)"
@@ -46,7 +42,6 @@ else:
 
 st.session_state['filter_suffix'] = filter_suffix
 
-# Thực hiện lọc dữ liệu
 df_filtered = df.copy()
 if selected_years:
     df_filtered = df_filtered[df_filtered['year_label'].isin(selected_years)]
@@ -54,14 +49,12 @@ if selected_genders:
     df_filtered = df_filtered[df_filtered['gender_label'].isin(selected_genders)]
 st.session_state['filtered_df'] = df_filtered
 
-# Chú thích thang đo (Ẩn hiện thông minh)
-with st.sidebar.expander(" THÔNG TIN THANG ĐO", expanded=False):
+with st.sidebar.expander("THÔNG TIN THANG ĐO", expanded=False):
     st.caption("Dữ liệu được chuẩn hóa thang 100 từ khảo sát Likert 1-5.")
 
-# --- GIAO DIỆN CHÍNH ---
 st.markdown(f"<h2 style='text-align: center; color:#2a9d8f;'>PHÂN TÍCH CÁC NHÂN TỐ ẢNH HƯỞNG ĐẾN KẾT QUẢ HỌC TẬP</h2>", unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs([" PHÂN TÍCH TỔNG QUAN", "👤 HỒ SƠ & TRỢ LÝ AI"])
+tab1, tab2 = st.tabs(["PHÂN TÍCH TỔNG QUAN", "HỒ SƠ & TRỢ LÝ AI"])
 
 with tab1:
     render_tab_general()
