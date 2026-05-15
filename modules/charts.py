@@ -130,14 +130,19 @@ def draw_treemap(df, suffix=""):
     d = _prepare_labels(df)
     df_tree = d.groupby(['Học lực', 'Hỗ trợ từ trường']).size().reset_index(name='Số lượng')
     df_tree = df_tree[df_tree['Số lượng'] > 0]
+    
+    # Loại bỏ các mốc màu vàng/trắng quá nhạt, thay bằng dải màu thương hiệu có độ tương phản ổn định
+    custom_scale = ["#94d2bd", "#2a9d8f", "#1d3557"]
+    
     fig = px.treemap(
         df_tree, path=[px.Constant("Toàn bộ nhóm"), 'Học lực', 'Hỗ trợ từ trường'], 
-        values='Số lượng', color='Số lượng', color_continuous_scale=PALETTE_SEQ
+        values='Số lượng', color='Số lượng', color_continuous_scale=custom_scale
     )
-    # ĐÃ FIX: Lược bỏ hoàn toàn thuộc tính textposition gây lỗi ValueError
+    
+    # Giải phóng color="white" để thuật toán tự động của Plotly tự đảo màu chữ (Đen/Trắng) theo độ sáng nền ô
     fig.update_traces(
         textinfo="label+value",
-        textfont=dict(size=13, color="white", family="Arial")
+        textfont=dict(size=13, family="Arial")
     )
     fig.update_layout(**COMMON_LAYOUT, title=f"Phân cấp cấu trúc Mức độ hỗ trợ từ Nhà trường {suffix}") 
     return fig
