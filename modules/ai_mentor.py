@@ -4,58 +4,56 @@ from google.genai import types
 
 def generate_advice(student_info):
     """
-    Hàm gọi Gemini API tạo lời khuyên học thuật cá nhân hóa dựa trên dữ liệu.
-    Đã sửa lỗi bỏ qua cấu hình cấu trúc token và giăng bẫy prompt nghiêm ngặt.
+    Module xử lý logic AI độc lập (Backend).
+    Tách biệt hoàn toàn khỏi tầng giao diện (Frontend) để đảm bảo hiệu suất.
     """
     try:
-        # Lấy API Key an toàn từ secrets.toml
-        api_key = st.secrets["GEMINI_API_KEY"]
+        api_key = st.secrets.get("GEMINI_API_KEY")
+        if not api_key:
+            return "**Lỗi hệ thống:** Chưa cấu hình GEMINI_API_KEY trong secrets."
+            
         client = genai.Client(api_key=api_key)
         
-        # Thêm câu lệnh ép buộc AI kết thúc bằng dấu chấm câu đầy đủ, không bỏ lửng
         system_instruction = (
-            "Bạn là hệ thống cố vấn học tập đại học chuyên nghiệp dựa trên dữ liệu. "
-            "Chỉ sử dụng 4 chỉ số (Thang 100) sau đây để nhận xét. Tuyệt đối không tự suy diễn thông tin nằm ngoài số liệu. "
-            "Không trả về định dạng Markdown phức tạp làm vỡ giao diện. Trả lời tối đa 4 dòng, văn phong học thuật, trực diện. "
-            "Cấu trúc bắt buộc: 1 câu tổng quan, 1 câu điểm mạnh, 1 câu điểm yếu, 1 câu đề xuất hành động thực tế giai đoạn nước rút. "
-            "QUY TẮC TỐI THƯỢNG: Phải viết các câu ngắn gọn và bắt buộc kết thúc bằng một dấu chấm câu hoàn chỉnh. Không được viết dông dài, không để chữ bị cắt cụt."
+            "Bạn là chuyên gia phân tích dữ liệu giáo dục đại học. "
+            "Đánh giá năng lực sinh viên dựa trên 4 chỉ số chuẩn hóa (thang 100). "
+            "Trả lời ngắn gọn, trực diện bằng định dạng Markdown. Bắt buộc trình bày theo 3 ý chính: "
+            "- **Điểm mạnh nổi bật:** [Phân tích 1 câu]\n"
+            "- **Hạn chế cốt lõi:** [Phân tích 1 câu]\n"
+            "- **Giải pháp hành động:** [Đề xuất 1 câu]"
         )
         
         user_prompt = (
             f"Mã sinh viên: {student_info['student_id']}\n"
-            f"- Năng lực tự lực (X): {student_info['index_tu_luc_scaled']:.1f}/100\n"
-            f"- Hỗ trợ từ trường (Y): {student_info['index_moi_truong_truong_scaled']:.1f}/100\n"
-            f"- Môi trường bạn bè (Z): {student_info['index_moi_truong_ban_be_scaled']:.1f}/100\n"
-            f"- GPA quy đổi (W): {student_info['gpa_scaled']:.1f}/100\n\n"
-            "Hãy phân tích và đưa ra lời khuyên theo đúng cấu trúc yêu cầu."
+            f"GPA: {student_info['gpa_scaled']:.1f}/100\n"
+            f"Tự lực: {student_info['index_tu_luc_scaled']:.1f}/100\n"
+            f"Hỗ trợ từ trường: {student_info['index_moi_truong_truong_scaled']:.1f}/100\n"
+            f"Môi trường bạn bè: {student_info['index_moi_truong_ban_be_scaled']:.1f}/100"
         )
 
-        # ĐỒNG BỘ CẤU TRÚC GỌI CONFIG CHUẨN XÁC CỦA NĂM 2026
-        # Khởi tạo đối tượng config riêng biệt để đảm bảo mô hình nạp thành công vào bộ nhớ
         advice_config = types.GenerateContentConfig(
             system_instruction=system_instruction,
-            max_output_tokens=1024, # Nâng hẳn lên 1024 để đảm bảo không gian biên dịch Unicode tiếng Việt
-            temperature=0.2 # Hạ thấp độ sáng tạo để AI tập trung viết ngắn, trực diện, không nói lan man
+            max_output_tokens=1024, 
+            temperature=0.2 
         )
 
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=user_prompt,
-            config=advice_config # Nạp cấu hình đã định nghĩa
+            config=advice_config 
         )
         
-        # Xử lý hậu kỳ chuỗi văn bản nhận được để đảm bảo tính thẩm mỹ UI
-        result_text = response.text.strip()
-        return result_text
+        return response.text.strip()
         
-    except Exception:
-        # Kích hoạt tầng dự phòng (Fallback) nếu mất kết nối hoặc lỗi API
-        return _fallback_advice(student_info['gpa_scaled'])
+    except Exception as e:
+        return _fallback_advice(student_info['gpa_scaled'], student_info['index_tu_luc_scaled'], str(e))
 
-def _fallback_advice(gpa_scaled):
-    if gpa_scaled >= 80:
-        return "Kết quả xuất sắc. Duy trì năng lực tự học hiện tại; cân nhắc tham gia các đề tài nghiên cứu khoa học chuyên sâu."
-    elif gpa_scaled >= 60:
-        return "Học lực khá. Có tiềm năng nhưng cần quản lý thời gian tự học tốt hơn để bứt phá lên nhóm giỏi."
+def _fallback_advice(gpa_scaled, tu_luc_scaled, error_msg):
+    """Hệ thống dự phòng dựa trên luật tĩnh (Rule-based Fallback)"""
+    gpa = float(gpa_scaled)
+    tu_luc = float(tu_luc_scaled)
+    
+    if gpa < 50 and tu_luc < 50:
+        return f"**CẢNH BÁO (Dự phòng):** API gián đoạn ({error_msg}). Chỉ số GPA ({gpa:.1f}) và Tự lực ({tu_luc:.1f}) đều ở mức thấp. Yêu cầu sinh viên rà soát lại phương pháp học tập."
     else:
-        return "CẢNH BÁO: Kết quả học tập đáng báo động. Yêu cầu sinh viên rà soát lại phương pháp học tập và chủ động tìm kiếm sự hỗ trợ từ Cố vấn học tập."
+        return f"**THÔNG TIN (Dự phòng):** API gián đoạn ({error_msg}). Năng lực học tập duy trì ở mức ổn định với GPA {gpa:.1f}. Tiếp tục phát huy phương pháp tự học hiện tại."
