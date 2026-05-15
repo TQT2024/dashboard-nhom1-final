@@ -11,8 +11,7 @@ def render_tab_individual():
         st.error(f"Lỗi truy xuất hệ thống định danh: {e}")
         return
 
-    if 'filtered_df' not in st.session_state:
-        return
+    if 'filtered_df' not in st.session_state: return
     df_filtered_macro = st.session_state['filtered_df']
     
     allowed_ids = df_filtered_macro['student_id'].astype(str).tolist()
@@ -28,10 +27,16 @@ def render_tab_individual():
     
     selected_option = st.selectbox("Chọn sinh viên để phân tích:", options=student_options)
     selected_id = str(selected_option.split(" - ")[0])
-    student_data = df_profile_allowed[df_profile_allowed['student_id'].astype(str) == selected_id].iloc[0]
+    
+    # SỬA LỖI: Bẫy lỗi mảng rỗng an toàn bằng chân đế kiểm tra .empty
+    student_filtered = df_profile_allowed[df_profile_allowed['student_id'].astype(str) == selected_id]
+    if student_filtered.empty:
+        st.error("Không tìm thấy hồ sơ sinh viên tương thích.")
+        return
+        
+    student_data = student_filtered.iloc[0]
 
     st.markdown("<hr style='margin: 10px 0 20px 0;'>", unsafe_allow_html=True)
-
     col_left, col_right = st.columns([1, 1.5]) 
 
     with col_left:
