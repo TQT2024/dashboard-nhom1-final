@@ -131,18 +131,18 @@ def draw_treemap(df, suffix=""):
     df_tree = d.groupby(['Học lực', 'Hỗ trợ từ trường']).size().reset_index(name='Số lượng')
     df_tree = df_tree[df_tree['Số lượng'] > 0]
     
-    # Loại bỏ các mốc màu vàng/trắng quá nhạt, thay bằng dải màu thương hiệu có độ tương phản ổn định
-    custom_scale = ["#94d2bd", "#2a9d8f", "#1d3557"]
+    # ĐỒNG BỘ MÀU: Cắt bỏ 2 mốc màu vàng nhạt đầu dải để lấy dải màu xanh ngọc đến Teal đậm nhất quán
+    vibrant_scale = PALETTE_SEQ[2:]
     
     fig = px.treemap(
         df_tree, path=[px.Constant("Toàn bộ nhóm"), 'Học lực', 'Hỗ trợ từ trường'], 
-        values='Số lượng', color='Số lượng', color_continuous_scale=custom_scale
+        values='Số lượng', color='Số lượng', color_continuous_scale=vibrant_scale
     )
     
-    # Giải phóng color="white" để thuật toán tự động của Plotly tự đảo màu chữ (Đen/Trắng) theo độ sáng nền ô
+    # ĐỒNG BỘ CHỮ: Khóa màu trắng chữ quay trở lại vì nền các ô hiện tại đều đã đủ độ đậm an toàn
     fig.update_traces(
         textinfo="label+value",
-        textfont=dict(size=13, family="Arial")
+        textfont=dict(size=13, color="white", family="Arial")
     )
     fig.update_layout(**COMMON_LAYOUT, title=f"Phân cấp cấu trúc Mức độ hỗ trợ từ Nhà trường {suffix}") 
     return fig
