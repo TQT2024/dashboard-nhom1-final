@@ -49,8 +49,21 @@ if selected_genders:
     df_filtered = df_filtered[df_filtered['gender_label'].isin(selected_genders)]
 st.session_state['filtered_df'] = df_filtered
 
-with st.sidebar.expander("THÔNG TIN THANG ĐO", expanded=False):
-    st.caption("Dữ liệu được chuẩn hóa thang 100 từ khảo sát Likert 1-5.")
+with st.sidebar.expander("ℹ️ THÔNG TIN THANG ĐO & CHUẨN HÓA", expanded=False):
+    st.markdown("""
+    **Phương pháp:** Chuyển đổi tuyến tính từ thang Likert (1-5) sang thang điểm 100.
+    
+    | Likert | Thang 100 | Ý nghĩa định tính |
+    | :---: | :---: | :--- |
+    | 1 | 20 | Rất thấp / Rất kém |
+    | 2 | 40 | Thấp / Kém |
+    | 3 | 60 | Trung bình / Bình thường |
+    | 4 | 80 | Cao / Tốt |
+    | 5 | 100 | Rất cao / Rất tốt |
+    
+    **Công thức:** $X_{scaled} = X_{likert} \\times 20$
+    """)
+    st.caption("GPA cũng được quy đổi đồng bộ về hệ 100 để đối chuẩn.")
 
 st.markdown(f"<h2 style='text-align: center; color:#2a9d8f;'>PHÂN TÍCH CÁC NHÂN TỐ ẢNH HƯỞNG ĐẾN KẾT QUẢ HỌC TẬP</h2>", unsafe_allow_html=True)
 
