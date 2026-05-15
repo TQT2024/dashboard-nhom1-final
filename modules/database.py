@@ -3,11 +3,9 @@ import pandas as pd
 import streamlit as st
 import os
 
-# Định vị đường dẫn tương đối đến file database
-# Đảm bảo file database.py nằm trong thư mục modules/ và student_data.db nằm trong thư mục data/
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "student_data.db")
 
-@st.cache_data(ttl=3600)  # TTL=3600: Cache sẽ tự động làm mới sau 1 giờ (phục vụ tốt nếu có cập nhật CSDL)
+@st.cache_data(ttl=3600)  # TTL=3600: Cache sẽ tự động làm mới sau 1 giờ
 def load_general_data():
     """Truy xuất dữ liệu tổng quan cho Tab 1 từ View vw_dashboard_main"""
     try:
