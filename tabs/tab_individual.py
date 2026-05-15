@@ -70,16 +70,16 @@ def render_tab_individual():
             if not api_key:
                 st.error("Chưa cấu hình API Key.")
             else:
-                with st.spinner("Đang biên dịch..."):
+                with st.spinner("Đang xử lý thuật toán phân tích..."):
                     try:
                         client = genai.Client(api_key=api_key)
                         config = types.GenerateContentConfig(
                             system_instruction=(
-                                "Bạn là chuyên gia phân tích dữ liệu giáo dục. Phân tích số liệu và trả về kết quả bằng định dạng Markdown. "
-                                "Chỉ viết đúng 3 gạch đầu dòng: "
-                                "- **Điểm mạnh nổi bật:** [Nội dung ngắn gọn]\n"
-                                "- **Hạn chế cốt lõi:** [Nội dung ngắn gọn]\n"
-                                "- **Giải pháp hành động:** [Nội dung ngắn gọn]"
+                                "Bạn là chuyên gia phân tích dữ liệu giáo dục. Đánh giá dựa trên 4 chỉ số (Thang 100). "
+                                "Trả lời theo đúng định dạng 3 dòng sau, mỗi ý 1 câu, bắt buộc kết thúc bằng dấu chấm: "
+                                "- <b>Điểm mạnh nổi bật:</b> [Viết 1 câu trọn vẹn]\n"
+                                "- <b>Hạn chế cốt lõi:</b> [Viết 1 câu trọn vẹn]\n"
+                                "- <b>Giải pháp hành động:</b> [Viết 1 câu trọn vẹn]"
                             ),
                             temperature=0.2,
                             max_output_tokens=500
@@ -88,9 +88,25 @@ def render_tab_individual():
                         prompt = f"GPA: {student_data['gpa_scaled']}, Tự lực: {student_data['index_tu_luc_scaled']}, Trường: {student_data['index_moi_truong_truong_scaled']}, Bạn bè: {student_data['index_moi_truong_ban_be_scaled']}."
                         response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt, config=config)
                         
-                        st.info(response.text.strip())
+                        # Parse Markdown sang HTML để không bị dính chùm chữ
+                        parsed_text = response.text.strip().replace('\n', '<br>')
+                        
+                        # Khung Auto-expand, đồng bộ màu sắc Xanh Mint, không khóa chiều cao
+                        custom_box = f"""
+                        <div style="background-color: #f0f7f6; padding: 15px; border-radius: 5px; border-left: 4px solid #2a9d8f; font-size: 14px; line-height: 1.6; color: #222;">
+                            {parsed_text}
+                        </div>
+                        """
+                        st.markdown(custom_box, unsafe_allow_html=True)
                         
                     except Exception as ex:
-                        st.warning(f"Cảnh báo (Fallback): API lỗi ({ex}). GPA hiện tại: {student_data['gpa_scaled']:.1f}. Đề xuất: Tập trung cải thiện các chỉ số có tỷ trọng thấp.")
+                        # Fallback Box
+                        fallback_box = f"""
+                        <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffeeba; font-size: 14px; line-height: 1.6; color: #856404;">
+                            <b>Cảnh báo (Fallback):</b> API gián đoạn ({ex}).<br>
+                            Hệ thống ghi nhận GPA hiện tại: {student_data['gpa_scaled']:.1f}. Đề xuất: Tập trung cải thiện các chỉ số có tỷ trọng thấp.
+                        </div>
+                        """
+                        st.markdown(fallback_box, unsafe_allow_html=True)
         else:
             st.caption("Nhấn nút để kích hoạt hệ thống AI phân tích dữ liệu sinh viên.")
