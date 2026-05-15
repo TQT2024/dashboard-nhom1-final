@@ -35,6 +35,7 @@ def render_tab_individual():
 
     col_left, col_right = st.columns([1, 2])
 
+    # ================= CỘT TRÁI: DỮ LIỆU TĨNH + AI =================
     with col_left:
         st.markdown("<p style='font-size:15px; font-weight:bold; color:#e76f51; margin-bottom:5px;'>Hồ sơ hành chính</p>", unsafe_allow_html=True)
         st.markdown(f"""
@@ -59,10 +60,7 @@ def render_tab_individual():
         with st.expander("Phương pháp chuẩn hóa chỉ số"):
             st.latex(r"\text{Chỉ số}_{100} = \text{Likert}_{1-5} \times 20")
 
-    with col_right:
-        st.markdown("<p style='font-size:15px; font-weight:bold; color:#2a9d8f; text-align:center;'>Đối chuẩn đa giác Radar</p>", unsafe_allow_html=True)
-        st.plotly_chart(draw_radar_chart(student_data, df_profile_all), use_container_width=True, config={'displayModeBar': False})
-        
+        # ĐÃ DI DỜI KHỐI AI SANG CỘT TRÁI ĐỂ LẤP KHOẢNG TRỐNG
         st.markdown("<p style='font-size:15px; font-weight:bold; color:#2a9d8f; margin:15px 0 5px 0;'>Cố vấn học thuật AI</p>", unsafe_allow_html=True)
         
         if st.button("Tạo báo cáo tự động", use_container_width=True):
@@ -76,10 +74,11 @@ def render_tab_individual():
                         config = types.GenerateContentConfig(
                             system_instruction=(
                                 "Bạn là chuyên gia phân tích dữ liệu giáo dục. Đánh giá dựa trên 4 chỉ số (Thang 100). "
-                                "Trả lời theo đúng định dạng 3 dòng sau, mỗi ý 1 câu, bắt buộc kết thúc bằng dấu chấm: "
-                                "- <b>Điểm mạnh nổi bật:</b> [Viết 1 câu trọn vẹn]\n"
-                                "- <b>Hạn chế cốt lõi:</b> [Viết 1 câu trọn vẹn]\n"
-                                "- <b>Giải pháp hành động:</b> [Viết 1 câu trọn vẹn]"
+                                "Tuyệt đối KHÔNG dùng định dạng Markdown (không dùng dấu gạch ngang hay dấu sao). "
+                                "Chỉ trả về nội dung bằng mã HTML thuần túy theo đúng cấu trúc sau: "
+                                "<b>Điểm mạnh nổi bật:</b> [Viết 1 câu trọn vẹn]<br><br>"
+                                "<b>Hạn chế cốt lõi:</b> [Viết 1 câu trọn vẹn]<br><br>"
+                                "<b>Giải pháp hành động:</b> [Viết 1 câu trọn vẹn]"
                             ),
                             temperature=0.2,
                             max_output_tokens=500
@@ -88,25 +87,31 @@ def render_tab_individual():
                         prompt = f"GPA: {student_data['gpa_scaled']}, Tự lực: {student_data['index_tu_luc_scaled']}, Trường: {student_data['index_moi_truong_truong_scaled']}, Bạn bè: {student_data['index_moi_truong_ban_be_scaled']}."
                         response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt, config=config)
                         
-                        # Parse Markdown sang HTML để không bị dính chùm chữ
-                        parsed_text = response.text.strip().replace('\n', '<br>')
-                        
-                        # Khung Auto-expand, đồng bộ màu sắc Xanh Mint, không khóa chiều cao
+                        # Khung Auto-expand, đồng bộ màu Xanh Mint, hiển thị 100% nội dung HTML
                         custom_box = f"""
                         <div style="background-color: #f0f7f6; padding: 15px; border-radius: 5px; border-left: 4px solid #2a9d8f; font-size: 14px; line-height: 1.6; color: #222;">
-                            {parsed_text}
+                            {response.text.strip()}
                         </div>
                         """
                         st.markdown(custom_box, unsafe_allow_html=True)
                         
                     except Exception as ex:
-                        # Fallback Box
                         fallback_box = f"""
                         <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffeeba; font-size: 14px; line-height: 1.6; color: #856404;">
-                            <b>Cảnh báo (Fallback):</b> API gián đoạn ({ex}).<br>
-                            Hệ thống ghi nhận GPA hiện tại: {student_data['gpa_scaled']:.1f}. Đề xuất: Tập trung cải thiện các chỉ số có tỷ trọng thấp.
+                            <b>Cảnh báo (Fallback):</b> API gián đoạn ({ex}).<br><br>
+                            Hệ thống ghi nhận GPA hiện tại: {student_data['gpa_scaled']:.1f}.<br>
+                            Đề xuất: Tập trung cải thiện các chỉ số có tỷ trọng thấp.
                         </div>
                         """
                         st.markdown(fallback_box, unsafe_allow_html=True)
         else:
-            st.caption("Nhấn nút để kích hoạt hệ thống AI phân tích dữ liệu sinh viên.")
+            st.markdown("""
+            <div style="background-color: #fafafa; padding: 15px; border-radius: 5px; border: 1px dashed #ccc; font-size: 13px; color: gray; text-align: center;">
+                Nhấn nút để AI phân tích.
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ================= CỘT PHẢI: TRỰC QUAN HÓA =================
+    with col_right:
+        st.markdown("<p style='font-size:16px; font-weight:bold; color:#2a9d8f; text-align:center;'>Đối chuẩn đa giác Radar</p>", unsafe_allow_html=True)
+        st.plotly_chart(draw_radar_chart(student_data, df_profile_all), use_container_width=True, config={'displayModeBar': False})
