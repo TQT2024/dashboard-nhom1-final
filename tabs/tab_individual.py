@@ -46,7 +46,7 @@ def render_tab_individual():
         <b>ID:</b> {student_data['student_id']}<br>
         <b>Họ tên:</b> {student_data.get('full_name', 'N/A')}<br>
         <b>Niên khoá:</b> {student_data.get('year_label', 'N/A')}<br>
-        <b>Diện chính sách:</b> {student_data.get('policy_label', 'Không')}
+        <b>Thuộc:</b> {student_data.get('policy_label', 'Không')}
         </div>
         """, unsafe_allow_html=True)
         
