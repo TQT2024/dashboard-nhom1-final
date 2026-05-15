@@ -22,22 +22,11 @@ def render_tab_general():
     df_raw = st.session_state['raw_df']
     
     if len(df_filtered) == 0:
-        st.warning(" Không có dữ liệu phù hợp với điều kiện lọc hiện hành.")
+        st.warning("Không có dữ liệu phù hợp với điều kiện lọc hiện hành.")
         return
 
-    years = st.session_state.get('global_years', [])
-    genders = st.session_state.get('global_genders', [])
-    
-    is_all_years = len(years) == 0 or len(years) == len(df_raw['year_label'].unique())
-    is_all_genders = len(genders) == 0 or len(genders) == len(df_raw['gender_label'].unique())
-    
-    if is_all_years and is_all_genders:
-        suffix = " (Toàn khóa)"
-    else:
-        parts = []
-        if not is_all_years: parts.append("+".join(years))
-        if not is_all_genders: parts.append("+".join(genders))
-        suffix = f" ({', '.join(parts)})"
+    # SỬA LỖI: Tiêu thụ trực tiếp biến suffix được tính toán tập trung từ app.py
+    suffix = st.session_state.get('filter_suffix', ' (Toàn khóa)')
 
     gpa_avg = df_filtered['gpa_raw'].mean()
     study_avg = df_filtered['time_studying'].mean()
@@ -58,12 +47,8 @@ def render_tab_general():
     with c3: st.plotly_chart(draw_density_heatmap(df_filtered, suffix), use_container_width=True, config={'displayModeBar': False})
     with c4: st.plotly_chart(draw_scatter_plot(df_filtered, suffix), use_container_width=True, config={'displayModeBar': False})
     
-    # Tính toán động hệ số tương quan hạng Spearman (Spearman rank correlation)
     if len(df_filtered) > 5:
-        # Bổ sung tham số method='spearman' để thay đổi thuật toán gốc
         corr_spearman = df_filtered['index_tu_luc_scaled'].corr(df_filtered['gpa_scaled'], method='spearman')
-        
-        # Thang đo phân vị phân tách mức độ tương quan Spearman chuẩn học thuật
         if abs(corr_spearman) >= 0.5:
             desc = "Mức độ tương quan thuận mạnh mẽ: Năng lực tự lực nội tại quyết định trực tiếp đến việc định hình kết quả học tập."
             status_box = st.info
@@ -74,10 +59,9 @@ def render_tab_general():
             desc = "Mức độ tương quan thuận ở dải yếu: Các nhân tố chủ quan có tác động nhưng biên độ không quá lớn lên điểm số."
             status_box = st.warning
         else:
-            desc = "Hầu như không xuất hiện mối tương quan tuyến tính rõ rệt giữa hai cấu phần chỉ số."
+            desc = "Hầu như không xuất hiện mối tương quan rõ rệt giữa hai cấu phần chỉ số."
             status_box = st.warning
             
-        # Xuất hộp thoại giao tiếp ngữ cảnh động tinh gọn, sạch sẽ
         status_box(f"**Hệ số tương quan hạng Spearman:** rho (ρ) = {corr_spearman:.2f}. {desc}")
 
     st.subheader("3. Đặc thù giới tính và môi trường")
