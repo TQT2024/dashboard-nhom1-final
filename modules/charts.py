@@ -134,6 +134,11 @@ def draw_treemap(df, suffix=""):
         df_tree, path=[px.Constant("Toàn bộ nhóm"), 'Học lực', 'Hỗ trợ từ trường'], 
         values='Số lượng', color='Số lượng', color_continuous_scale=PALETTE_SEQ
     )
-    fig.update_traces(textinfo="label+value")
+    # SỬA LỖI: Ép cứng font chữ trắng tương phản cao và khóa vị trí inside để hiển thị rõ nét
+    fig.update_traces(
+        textinfo="label+value",
+        textposition="inside",
+        textfont=dict(size=13, color="white", family="Arial")
+    )
     fig.update_layout(**COMMON_LAYOUT, title=f"Phân cấp cấu trúc Mức độ hỗ trợ từ Nhà trường {suffix}") 
     return fig
