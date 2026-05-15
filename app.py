@@ -9,7 +9,7 @@ from tabs.tab_general import render_tab_general
 from tabs.tab_individual import render_tab_individual
 
 st.set_page_config(
-    page_title="Dashboard Phân tích Sinh viên",
+    page_title="Hệ thống Phân tích Học vụ và Cố vấn AI",
     layout="wide"
 )
 
@@ -17,17 +17,28 @@ if 'raw_df' not in st.session_state:
     try:
         st.session_state['raw_df'] = load_general_data()
     except Exception as e:
-        st.error(f"Lỗi truy xuất CSDL: {e}")
+        st.error(f"Lỗi truy xuất hệ thống dữ liệu: {e}")
         st.stop()
 
 df = st.session_state['raw_df']
 
-st.sidebar.header("BỘ LỌC")
+st.sidebar.markdown("<p style='font-size:16px; font-weight:bold; color:#222; margin-bottom:5px;'>Bộ lọc dữ liệu</p>", unsafe_allow_html=True)
+
 available_years = sorted(df['year_label'].unique().tolist())
-selected_years = st.sidebar.multiselect("Niên khoá:", options=available_years, default=available_years)
+# ĐỒNG BỘ: Khóa cứng key toàn cục global_years
+selected_years = st.sidebar.multiselect("Niên khóa:", options=available_years, default=available_years, key="global_years")
 
 available_genders = sorted(df['gender_label'].unique().tolist())
-selected_genders = st.sidebar.multiselect("Giới tính:", options=available_genders, default=available_genders)
+# ĐỒNG BỘ: Khóa cứng key toàn cục global_genders
+selected_genders = st.sidebar.multiselect("Giới tính:", options=available_genders, default=available_genders, key="global_genders")
+
+df_filtered = df.copy()
+# SỬA LỖI: Tránh rỗng dữ liệu khi xóa sạch bộ lọc, mặc định lấy toàn bộ dải mẫu
+if selected_years:
+    df_filtered = df_filtered[df_filtered['year_label'].isin(selected_years)]
+if selected_genders:
+    df_filtered = df_filtered[df_filtered['gender_label'].isin(selected_genders)]
+st.session_state['filtered_df'] = df_filtered
 
 total_y, total_g = len(available_years), len(available_genders)
 if len(selected_years) == total_y and len(selected_genders) == total_g:
@@ -35,24 +46,18 @@ if len(selected_years) == total_y and len(selected_genders) == total_g:
 elif not selected_years or not selected_genders:
     filter_suffix = "(Chưa chọn dữ liệu)"
 else:
-    y_text = "Tất cả năm" if len(selected_years) == total_y else ", ".join(selected_years)
-    g_text = "Tất cả giới" if len(selected_genders) == total_g else ", ".join(selected_genders)
-    filter_suffix = f"(Nhóm: {g_text} | {y_text})"
+    y_text = "Tất cả năm" if len(selected_years) == total_y else "+".join(selected_years)
+    g_text = "Tất cả giới" if len(selected_genders) == total_g else "+".join(selected_genders)
+    filter_suffix = f"({g_text} | {y_text})"
 
 st.session_state['filter_suffix'] = filter_suffix
 
-df_filtered = df.copy()
-if selected_years:
-    df_filtered = df_filtered[df_filtered['year_label'].isin(selected_years)]
-if selected_genders:
-    df_filtered = df_filtered[df_filtered['gender_label'].isin(selected_genders)]
-st.session_state['filtered_df'] = df_filtered
-
-with st.sidebar.expander("THÔNG TIN THANG ĐO & CHUẨN HÓA", expanded=False):
+with st.sidebar.expander("ℹ️ Thang đo và Phương pháp chuẩn hóa", expanded=False):
     st.markdown("""
-    **Phương pháp:** Chuyển đổi tuyến tính từ thang Likert (1-5) sang thang điểm 100.
+    **Phương pháp:** Chuyển đổi tuyến tính từ thang đo khảo sát Likert (1-5) sang thang điểm 100 hệ thống.
+
     
-    | Likert | Thang 100 | Ý nghĩa định tính |
+    | Khảo sát | Hệ 100 | Ý nghĩa định tính |
     | :---: | :---: | :--- |
     | 1 | 20 | Rất thấp / Rất kém |
     | 2 | 40 | Thấp / Kém |
@@ -62,11 +67,11 @@ with st.sidebar.expander("THÔNG TIN THANG ĐO & CHUẨN HÓA", expanded=False):
     
     **Công thức:** $X_{scaled} = X_{likert} \\times 20$
     """)
-    st.caption("GPA cũng được quy đổi đồng bộ về hệ 100 để đối chuẩn.")
+    st.caption("Điểm học tập tích lũy (GPA) cũng được quy đổi đồng bộ về thang 100 để tiến hành đối chuẩn đa giác.")
 
-st.markdown(f"<h2 style='text-align: center; color:#2a9d8f;'>PHÂN TÍCH CÁC NHÂN TỐ ẢNH HƯỞNG ĐẾN KẾT QUẢ HỌC TẬP</h2>", unsafe_allow_html=True)
+st.markdown(f"<h2 style='text-align: center; color:#2a9d8f; font-weight: bold; margin-bottom: 25px;'>Dashboard Phân tích Hiệu suất Học tập và Cố vấn Học vụ Sinh viên</h2>", unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs(["Phân tích tổng quan", "Phân tích hồ sơ cá nhân"])
+tab1, tab2 = st.tabs(["Phân tích tổng quan nhóm", "Tra cứu hồ sơ cá nhân"])
 
 with tab1:
     render_tab_general()
