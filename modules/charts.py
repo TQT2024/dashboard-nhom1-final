@@ -68,7 +68,19 @@ def draw_density_heatmap(df, suffix=""):
         category_orders={"Thời gian tự học": study_order, "Học lực": gpa_order},
         text_auto=True, color_continuous_scale=PALETTE_SEQ
     )
-    fig.update_layout(**COMMON_LAYOUT, title=f"Ma trận mật độ hành vi Tự học vs Học lực {suffix}", coloraxis_showscale=False)
+    # Hiển thị dải màu nằm ngang, ghi đè margin-bottom để không đè lên trục X
+    fig.update_layout(
+        **COMMON_LAYOUT, 
+        title=f"Ma trận mật độ hành vi Tự học vs Học lực {suffix}",
+        coloraxis_colorbar=dict(
+            title="Số lượng SV",
+            orientation="h",
+            thickness=10,
+            len=0.6,
+            y=-0.25
+        ),
+        margin=dict(l=20, r=20, t=40, b=70) 
+    )
     fig.update_xaxes(title=None)
     fig.update_yaxes(title=None)
     return fig
@@ -80,7 +92,23 @@ def draw_scatter_plot(df, suffix=""):
         labels={"index_tu_luc_scaled": "Năng lực Tự lực học tập", "gpa_scaled": "Kết quả điểm tích lũy GPA"}
     )
     fig.update_traces(marker=dict(size=12, opacity=0.6))
-    fig.update_layout(**COMMON_LAYOUT, title=f"Phân tán tương quan Tự học vs GPA {suffix}", xaxis=dict(range=[0, 105]), yaxis=dict(range=[0, 105]), coloraxis_showscale=False)
+    # Hiển thị dải màu nằm ngang, ép tickvals từ 1-5, ghi đè margin-bottom
+    fig.update_layout(
+        **COMMON_LAYOUT, 
+        title=f"Phân tán tương quan Tự học vs GPA {suffix}", 
+        xaxis=dict(range=[0, 105]), 
+        yaxis=dict(range=[0, 105]),
+        coloraxis_colorbar=dict(
+            title="Mức tự học",
+            orientation="h",
+            thickness=10,
+            len=0.6,
+            y=-0.25,
+            tickvals=[1, 2, 3, 4, 5],
+            ticktext=["1", "2", "3", "4", "5"]
+        ),
+        margin=dict(l=20, r=20, t=40, b=70)
+    )
     return fig
 
 def draw_stacked_bar(df, suffix=""):
