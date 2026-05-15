@@ -35,14 +35,14 @@ def draw_radar_chart(student_data, df_all):
     ))
     
     fig.update_layout(
-        height=350, 
+        height=500, # Nâng chiều cao lên 500px để cân bằng với cột Info + AI bên trái
         polar=dict(
-            radialaxis=dict(visible=True, range=[0, 100], showticklabels=True, tickfont=dict(size=9, color='gray')),
-            angularaxis=dict(tickfont=dict(size=11, color='#222', weight='bold'))
+            radialaxis=dict(visible=True, range=[0, 100], showticklabels=True, tickfont=dict(size=10, color='gray')),
+            angularaxis=dict(tickfont=dict(size=12, color='#222', weight='bold'))
         ),
-        margin=dict(l=80, r=80, t=40, b=40), # Tăng lề để không mất chữ
+        margin=dict(l=90, r=90, t=50, b=50), # Lề siêu rộng để không bao giờ mất chữ
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+        legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5)
     )
     return fig
