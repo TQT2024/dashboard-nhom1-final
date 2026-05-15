@@ -33,11 +33,9 @@ def render_tab_individual():
 
     st.markdown("<hr style='margin: 10px 0 20px 0;'>", unsafe_allow_html=True)
 
-    # LƯỚI KHÔNG GIAN MỚI: Trái (Info + AI) | Phải (Radar)
-    col_left, col_right = st.columns([1, 1.2])
+    col_left, col_right = st.columns([1, 2])
 
     with col_left:
-        # 1. Khối Thông tin
         st.markdown("<p style='font-size:15px; font-weight:bold; color:#e76f51; margin-bottom:5px;'>Hồ sơ hành chính</p>", unsafe_allow_html=True)
         st.markdown(f"""
         <div style="font-size:14px; line-height:1.6; background-color:#f8f9fa; padding:15px; border-radius:5px; border:1px solid #eee;">
@@ -48,7 +46,6 @@ def render_tab_individual():
         </div>
         """, unsafe_allow_html=True)
         
-        # 2. Khối Chỉ số
         st.markdown("<p style='font-size:15px; font-weight:bold; color:#2a9d8f; margin:15px 0 5px 0;'>Chỉ số năng lực (Thang 100)</p>", unsafe_allow_html=True)
         st.markdown(f"""
         <div style="font-size:14px; line-height:1.6; background-color:#f8f9fa; padding:15px; border-radius:5px; border:1px solid #eee;">
@@ -58,8 +55,14 @@ def render_tab_individual():
         • Áp lực bạn bè: <b>{student_data['index_moi_truong_ban_be_scaled']:.1f}</b>
         </div>
         """, unsafe_allow_html=True)
+        
+        with st.expander("Phương pháp chuẩn hóa chỉ số"):
+            st.latex(r"\text{Chỉ số}_{100} = \text{Likert}_{1-5} \times 20")
 
-        # 3. Khối AI (Đưa vào cột trái để thẳng hàng)
+    with col_right:
+        st.markdown("<p style='font-size:15px; font-weight:bold; color:#2a9d8f; text-align:center;'>Đối chuẩn đa giác Radar</p>", unsafe_allow_html=True)
+        st.plotly_chart(draw_radar_chart(student_data, df_profile_all), use_container_width=True, config={'displayModeBar': False})
+        
         st.markdown("<p style='font-size:15px; font-weight:bold; color:#2a9d8f; margin:15px 0 5px 0;'>Cố vấn học thuật AI</p>", unsafe_allow_html=True)
         
         if st.button("Tạo báo cáo tự động", use_container_width=True):
@@ -70,49 +73,24 @@ def render_tab_individual():
                 with st.spinner("Đang biên dịch..."):
                     try:
                         client = genai.Client(api_key=api_key)
-                        # Bỏ ép buộc đếm từ, chuyển sang ép buộc cấu trúc
                         config = types.GenerateContentConfig(
                             system_instruction=(
-                                "Bạn là Cố vấn học tập. Phân tích số liệu và trả về kết quả bằng định dạng HTML. "
-                                "Tuyệt đối không dùng Markdown. Hãy dùng thẻ <b> để in đậm tiêu đề. "
-                                "Chỉ viết đúng 3 dòng: "
-                                "1. <b>Điểm mạnh:</b> [Nội dung ngắn gọn]<br><br>"
-                                "2. <b>Hạn chế:</b> [Nội dung ngắn gọn]<br><br>"
-                                "3. <b>Giải pháp:</b> [Nội dung ngắn gọn]"
+                                "Bạn là chuyên gia phân tích dữ liệu giáo dục. Phân tích số liệu và trả về kết quả bằng định dạng Markdown. "
+                                "Chỉ viết đúng 3 gạch đầu dòng: "
+                                "- **Điểm mạnh nổi bật:** [Nội dung ngắn gọn]\n"
+                                "- **Hạn chế cốt lõi:** [Nội dung ngắn gọn]\n"
+                                "- **Giải pháp hành động:** [Nội dung ngắn gọn]"
                             ),
-                            temperature=0.3,
-                            max_output_tokens=800
+                            temperature=0.2,
+                            max_output_tokens=500
                         )
                         
                         prompt = f"GPA: {student_data['gpa_scaled']}, Tự lực: {student_data['index_tu_luc_scaled']}, Trường: {student_data['index_moi_truong_truong_scaled']}, Bạn bè: {student_data['index_moi_truong_ban_be_scaled']}."
                         response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt, config=config)
                         
-                        # Ô kết quả có THANH CUỘN DỌC, đồng bộ màu XANH MINT của Dashboard
-                        html_box = f"""
-                        <div style="height: 200px; overflow-y: auto; background-color: #f0f7f6; padding: 15px; border-radius: 5px; border-left: 4px solid #2a9d8f; font-size: 14px; line-height: 1.6; color: #222;">
-                            {response.text.strip()}
-                        </div>
-                        """
-                        st.markdown(html_box, unsafe_allow_html=True)
+                        st.info(response.text.strip())
                         
                     except Exception as ex:
-                        # Fallback có màu đồng bộ
-                        fallback_box = f"""
-                        <div style="height: 200px; overflow-y: auto; background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffeeba; font-size: 14px;">
-                            <b>Cảnh báo (Fallback):</b> API lỗi ({ex}).<br><br>
-                            GPA hiện tại: {student_data['gpa_scaled']:.1f}. Năng lực tự lực: {student_data['index_tu_luc_scaled']:.1f}.<br>
-                            Đề xuất: Sinh viên cần chủ động tăng thời gian tự học để cải thiện GPA.
-                        </div>
-                        """
-                        st.markdown(fallback_box, unsafe_allow_html=True)
+                        st.warning(f"Cảnh báo (Fallback): API lỗi ({ex}). GPA hiện tại: {student_data['gpa_scaled']:.1f}. Đề xuất: Tập trung cải thiện các chỉ số có tỷ trọng thấp.")
         else:
-            # Hộp chờ mặc định
-            st.markdown("""
-            <div style="height: 200px; background-color: #fafafa; padding: 15px; border-radius: 5px; border: 1px dashed #ccc; font-size: 13px; color: gray; text-align: center; display: flex; align-items: center; justify-content: center;">
-                Nhấn nút phía trên để hệ thống AI phân tích dữ liệu sinh viên này.
-            </div>
-            """, unsafe_allow_html=True)
-
-    with col_right:
-        st.markdown("<p style='font-size:16px; font-weight:bold; color:#2a9d8f; text-align:center;'>Đối chuẩn đa giác Radar</p>", unsafe_allow_html=True)
-        st.plotly_chart(draw_radar_chart(student_data, df_profile_all), use_container_width=True, config={'displayModeBar': False})
+            st.caption("Nhấn nút để kích hoạt hệ thống AI phân tích dữ liệu sinh viên.")
