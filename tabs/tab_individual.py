@@ -32,7 +32,6 @@ def render_tab_individual():
 
     st.markdown("<hr style='margin: 10px 0 20px 0;'>", unsafe_allow_html=True)
 
-    # ================= HÀNG 1: DỮ LIỆU TĨNH & BIỂU ĐỒ =================
     col_left, col_right = st.columns([1, 1.5]) 
 
     with col_left:
@@ -56,24 +55,26 @@ def render_tab_individual():
         </div>
         """, unsafe_allow_html=True)
         
-        with st.expander("🔍 Phương pháp chuẩn hóa chỉ số"):
-            st.latex(r"\text{Chỉ số}_{100} = \text{Likert}_{1-5} \times 20")
-            st.caption("Dữ liệu được tịnh tiến tuyến tính để đồng bộ không gian đo lường.")
+        with st.expander("🔍 Giải trình phương pháp chuẩn hóa"):
+            st.markdown("**Mô hình chuyển đổi dữ liệu:**")
+            st.latex(r"\text{Index}_{100} = \text{Value}_{Likert} \times 20")
+            st.info("""
+            **Tại sao chuẩn hóa?**
+            Việc tịnh tiến từ thang 5 sang thang 100 giúp đồng bộ hóa các biến số hành vi 
+            với kết quả học tập (GPA), từ đó cho phép thực hiện các thuật toán tương quan 
+            và trực quan hóa đa giác Radar một cách chính xác trên cùng một không gian đo lường.
+            """)
 
     with col_right:
         st.markdown("<p style='font-size:16px; font-weight:bold; color:#2a9d8f; text-align:center;'>Đối chuẩn đa giác Radar</p>", unsafe_allow_html=True)
         st.plotly_chart(draw_radar_chart(student_data, df_profile_all), use_container_width=True, config={'displayModeBar': False})
 
-    # ================= HÀNG 2: CÔNG CỤ CHUYÊN SÂU (TRÀN TOÀN MÀN HÌNH) =================
     st.markdown("---")
     st.markdown("<p style='font-size:15px; font-weight:bold; color:#2a9d8f; margin-bottom:10px;'>Cố vấn học thuật AI (Gemini Flash)</p>", unsafe_allow_html=True)
     
     if st.button("Kích hoạt Phân tích tự động", use_container_width=True):
         with st.spinner("Đang biên dịch thuật toán phân tích..."):
-            # Lời gọi duy nhất đến Backend, giải phóng hoàn toàn gánh nặng cho file UI
             ai_result = generate_advice(student_data)
-            
-            # Khung st.info bản địa: Hiển thị mượt Markdown, nền xanh chuẩn, tự động co giãn 100%
             st.info(ai_result, icon="💡")
     else:
         st.caption("Nhấn nút để kích hoạt hệ thống AI phân tích dữ liệu sinh viên.")
