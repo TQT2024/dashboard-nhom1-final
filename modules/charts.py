@@ -48,7 +48,7 @@ def draw_smart_chart(df_filtered, df_all, suffix=""):
         df_line = df_line.sort_values('order')
         fig = px.line(df_line, x="year_label", y="gpa_scaled", markers=True)
         fig.update_traces(line_color=ORANGE, line_width=4, marker=dict(size=10, color=MINT))
-        fig.update_layout(**COMMON_LAYOUT, title=f"Xu hướng điểm số qua các giai đoạn {suffix}", yaxis=dict(range=[0, 105], title="GPA Quy đổi (Thang 100)"))
+        fig.update_layout(**COMMON_LAYOUT, title=f"Xu hình điểm số qua các giai đoạn {suffix}", yaxis=dict(range=[0, 105], title="GPA Quy đổi (Thang 100)"))
     else:
         current_gpa = df_filtered['gpa_scaled'].mean()
         overall_gpa = df_all['gpa_scaled'].mean()
@@ -68,19 +68,20 @@ def draw_density_heatmap(df, suffix=""):
         category_orders={"Thời gian tự học": study_order, "Học lực": gpa_order},
         text_auto=True, color_continuous_scale=PALETTE_SEQ
     )
-    # SỬA LỖI: Nạp COMMON_LAYOUT trước để thiết lập khung nền và font chữ
     fig.update_layout(**COMMON_LAYOUT)
-    # Gọi tiếp lệnh update thứ hai để ghi đè thuộc tính lề dưới b=70 và chèn dải màu an toàn
     fig.update_layout(
         title=f"Ma trận mật độ hành vi Tự học vs Học lực {suffix}",
         coloraxis_colorbar=dict(
-            title="Số lượng SV",
-            orientation="h",
-            thickness=10,
-            len=0.6,
-            y=-0.25
+            title="Số lượng",
+            orientation="v",
+            thickness=12,
+            len=0.55,
+            y=0.5,
+            yanchor="middle",
+            x=1.02,
+            xanchor="left"
         ),
-        margin=dict(l=20, r=20, t=40, b=70) 
+        margin=dict(l=20, r=60, t=40, b=30)
     )
     fig.update_xaxes(title=None)
     fig.update_yaxes(title=None)
@@ -93,23 +94,24 @@ def draw_scatter_plot(df, suffix=""):
         labels={"index_tu_luc_scaled": "Năng lực Tự lực học tập", "gpa_scaled": "Kết quả điểm tích lũy GPA"}
     )
     fig.update_traces(marker=dict(size=12, opacity=0.6))
-    # SỬA LỖI: Nạp COMMON_LAYOUT trước để đồng bộ các cấu phần
     fig.update_layout(**COMMON_LAYOUT)
-    # Ghi đè cấu hình trục tọa độ khóa và dải vạch chia rời rạc hệ 1-5 mà không đè từ khóa margin
     fig.update_layout(
         title=f"Phân tán tương quan Tự học vs GPA {suffix}", 
         xaxis=dict(range=[0, 105]), 
         yaxis=dict(range=[0, 105]),
         coloraxis_colorbar=dict(
             title="Mức tự học",
-            orientation="h",
-            thickness=10,
-            len=0.6,
-            y=-0.25,
+            orientation="v",
+            thickness=12,
+            len=0.55,
+            y=0.5,
+            yanchor="middle",
+            x=1.02,
+            xanchor="left",
             tickvals=[1, 2, 3, 4, 5],
             ticktext=["1", "2", "3", "4", "5"]
         ),
-        margin=dict(l=20, r=20, t=40, b=70)
+        margin=dict(l=20, r=60, t=40, b=30)
     )
     return fig
 
