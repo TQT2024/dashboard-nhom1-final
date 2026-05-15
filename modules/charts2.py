@@ -2,7 +2,7 @@ import plotly.graph_objects as go
 
 def draw_radar_chart(student_data, df_all):
     mean_data = df_all[['index_tu_luc_scaled', 'index_moi_truong_truong_scaled', 'index_moi_truong_ban_be_scaled', 'gpa_scaled']].mean()
-    categories = ['Năng lực Tự lực', 'Hỗ trợ từ Trường', 'Áp lực Bạn bè', 'Kết quả GPA']
+    categories = ['Năng lực Tự học', 'Hỗ trợ từ Trường', 'Áp lực Bạn bè', 'Kết quả GPA']
     
     sv_metrics = [
         float(student_data['index_tu_luc_scaled']), 
