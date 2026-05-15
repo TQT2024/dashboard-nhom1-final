@@ -19,7 +19,7 @@ def render_tab_individual():
     df_profile_allowed = df_profile_all[df_profile_all['student_id'].astype(str).isin(allowed_ids)]
 
     if df_profile_allowed.empty:
-        st.warning("Không có dữ liệu thỏa mãn tiêu chí bộ lọc hệ thống.")
+        st.warning("Không có dữ liệu thỏa mãn bộ lọc hệ thống.")
         return
 
     student_options = df_profile_allowed.apply(
@@ -32,9 +32,11 @@ def render_tab_individual():
 
     st.markdown("<hr style='margin: 10px 0 20px 0;'>", unsafe_allow_html=True)
 
+    # Chia lưới 2 cột: Trái (Dữ liệu + AI) | Phải (Radar)
     col_left, col_right = st.columns([1, 1.5]) 
 
     with col_left:
+        # 1. Khối thông tin định danh
         st.markdown("<p style='font-size:15px; font-weight:bold; color:#e76f51; margin-bottom:5px;'>Hồ sơ sinh viên</p>", unsafe_allow_html=True)
         st.markdown(f"""
         <div style="font-size:14px; line-height:1.6; background-color:#f8f9fa; padding:15px; border-radius:5px; border:1px solid #eee;">
@@ -45,6 +47,7 @@ def render_tab_individual():
         </div>
         """, unsafe_allow_html=True)
         
+        # 2. Khối chỉ số năng lực
         st.markdown("<p style='font-size:15px; font-weight:bold; color:#2a9d8f; margin:15px 0 5px 0;'>Chỉ số học tập</p>", unsafe_allow_html=True)
         st.markdown(f"""
         <div style="font-size:14px; line-height:1.6; background-color:#f8f9fa; padding:15px; border-radius:5px; border:1px solid #eee;">
@@ -55,25 +58,27 @@ def render_tab_individual():
         </div>
         """, unsafe_allow_html=True)
         
+        # 3. Giải thích phương pháp
         with st.expander("Phương pháp chuẩn hóa"):
             st.markdown("**Mô hình chuyển đổi dữ liệu:**")
             st.latex(r"\text{Index}_{100} = \text{Value}_{Likert} \times 20")
             st.info("""
-            **Mục tiêu chuẩn hoá**
             Việc tịnh tiến từ thang 5 sang thang 100 giúp đồng bộ hóa các biến số hành vi 
-            với kết quả học tập (GPA), từ đó cho phép thực hiện các thuật toán tương quan 
-            và trực quan hóa đa giác Radar một cách chính xác trên cùng một không gian đo lường.
+            với kết quả học tập (GPA) để trực quan hóa đa giác Radar chính xác.
             """)
 
+        # 4. KHỐI AI: Đặt ở đây để lấp đầy khoảng trống cột trái
+        st.markdown("<p style='font-size:15px; font-weight:bold; color:#2a9d8f; margin:15px 0 5px 0;'>Phân tích cố vấn</p>", unsafe_allow_html=True)
+        if st.button("Bắt đầu phân tích hồ sơ", use_container_width=True):
+            with st.spinner("Đang phân tích..."):
+                # Gọi hàm từ module ai_mentor
+                ai_result = generate_advice(student_data)
+                # HIỂN THỊ KẾT QUẢ (Đã bỏ icon theo ý em)
+                st.info(ai_result) 
+        else:
+            st.caption("Nhấn nút để phân tích.")
+
     with col_right:
+        # Cột phải tập trung hiển thị Biểu đồ Radar lớn
         st.markdown("<p style='font-size:16px; font-weight:bold; color:#2a9d8f; text-align:center;'>Đối chuẩn đa giác Radar</p>", unsafe_allow_html=True)
         st.plotly_chart(draw_radar_chart(student_data, df_profile_all), use_container_width=True, config={'displayModeBar': False})
-
-    st.markdown("---")
-    st.markdown("<p style='font-size:15px; font-weight:bold; color:#2a9d8f; margin-bottom:10px;'>Phân tích</p>", unsafe_allow_html=True)
-    
-    if st.button("Bắt đầu phân tích hồ sơ", use_container_width=True):
-        with st.spinner("Đang phân tích..."):
-            ai_result = generate_advice(student_data)
-    else:
-        st.caption("Nhấn nút để phân tích.")
