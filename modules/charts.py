@@ -187,7 +187,7 @@ def draw_treemap(df, suffix=""):
     vibrant_scale = PALETTE_SEQ[2:]
     
     fig = px.treemap(
-        df_tree, path=[px.Constant("Toàn bộ nhóm"), 'Học lực', 'Hỗ trợ từ trường'], 
+        df_tree, path=[px.Constant("Toàn bộ nhóm"), 'Hỗ trợ từ trường', 'Học lực'], 
         values='Số lượng', color='Số lượng', color_continuous_scale=vibrant_scale
     )
     
@@ -198,5 +198,4 @@ def draw_treemap(df, suffix=""):
     )
     fig.update_layout(**COMMON_LAYOUT, title=f"Phân cấp cấu trúc Mức độ hỗ trợ từ Nhà trường {suffix}") 
     return fig
-
 
