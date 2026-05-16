@@ -94,16 +94,15 @@ def draw_scatter_plot(df, suffix="", discrete_color=True, count_color=True):
     if count_color:
         # Gom nhóm và đếm số điểm trùng
         grp = df.groupby(['index_tu_luc_scaled', 'gpa_scaled']).size().reset_index(name='count')
-        # Tạo kích thước marker dựa trên căn bậc hai của count để nhìn rõ khác biệt
-        grp['marker_size'] = (grp['count'] ** 0.5) * 6 + 6
+        # Giữ kích thước marker cố định; màu biểu diễn số điểm trùng
 
         fig = px.scatter(
             grp, x='index_tu_luc_scaled', y='gpa_scaled',
             color='count', color_continuous_scale=PALETTE_SEQ,
             labels=labels, hover_data={'count': True}
         )
-        # Áp kích thước marker tùy biến và độ mờ để tránh che khuất
-        fig.update_traces(marker=dict(size=grp['marker_size'], opacity=0.8, line=dict(width=0.5, color='rgba(0,0,0,0.2)')))
+        # Áp kích thước marker cố định và độ mờ để tránh che khuất
+        fig.update_traces(marker=dict(size=10, opacity=0.8, line=dict(width=0.5, color='rgba(0,0,0,0.2)')))
         fig.update_layout(**COMMON_LAYOUT)
         fig.update_layout(
             title=f"Phân tán (màu = số điểm trùng) Tự học vs GPA {suffix}",
