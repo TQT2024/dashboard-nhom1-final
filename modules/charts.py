@@ -167,6 +167,7 @@ def draw_scatter_plot(df, suffix="", discrete_color=True, count_color=True):
             )
     return fig
 
+
 def draw_treemap(df, suffix=""):
     d = _prepare_labels(df)
     df_tree = d.groupby(['Học lực', 'Hỗ trợ từ trường']).size().reset_index(name='Số lượng')
@@ -176,7 +177,7 @@ def draw_treemap(df, suffix=""):
     vibrant_scale = PALETTE_SEQ[2:]
     
     fig = px.treemap(
-        df_tree, path=[px.Constant("Toàn bộ nhóm"), 'Hỗ trợ từ trường', 'Học lực'], 
+        df_tree, path=[px.Constant("Toàn bộ nhóm"), 'Học lực', 'Hỗ trợ từ trường'], 
         values='Số lượng', color='Số lượng', color_continuous_scale=vibrant_scale
     )
     
