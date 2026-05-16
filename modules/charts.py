@@ -87,32 +87,85 @@ def draw_density_heatmap(df, suffix=""):
     fig.update_yaxes(title=None)
     return fig
 
-def draw_scatter_plot(df, suffix=""):
-    fig = px.scatter(
-        df, x="index_tu_luc_scaled", y="gpa_scaled", 
-        color="time_studying", color_continuous_scale=PALETTE_SEQ,
-        labels={"index_tu_luc_scaled": "Năng lực Tự lực học tập", "gpa_scaled": "Kết quả điểm tích lũy GPA"}
-    )
-    fig.update_traces(marker=dict(size=12, opacity=0.6))
-    fig.update_layout(**COMMON_LAYOUT)
-    fig.update_layout(
-        title=f"Phân tán tương quan Tự học vs GPA {suffix}", 
-        xaxis=dict(range=[0, 105]), 
-        yaxis=dict(range=[0, 105]),
-        coloraxis_colorbar=dict(
-            title="Mức tự học",
-            orientation="v",
-            thickness=12,
-            len=0.55,
-            y=0.5,
-            yanchor="middle",
-            x=1.02,
-            xanchor="left",
-            tickvals=[1, 2, 3, 4, 5],
-            ticktext=["1", "2", "3", "4", "5"]
-        ),
-        margin=dict(l=20, r=60, t=40, b=30)
-    )
+def draw_scatter_plot(df, suffix="", discrete_color=True, count_color=True):
+    labels = {"index_tu_luc_scaled": "Năng lực Tự lực học tập", "gpa_scaled": "Kết quả điểm tích lũy GPA"}
+
+    # Nếu muốn màu thể hiện số điểm trùng nhau (mật độ) thì gom nhóm theo cặp (x,y)
+    if count_color:
+        # Gom nhóm và đếm số điểm trùng
+        grp = df.groupby(['index_tu_luc_scaled', 'gpa_scaled']).size().reset_index(name='count')
+        # Tạo kích thước marker dựa trên căn bậc hai của count để nhìn rõ khác biệt
+        grp['marker_size'] = (grp['count'] ** 0.5) * 6 + 6
+
+        fig = px.scatter(
+            grp, x='index_tu_luc_scaled', y='gpa_scaled',
+            color='count', color_continuous_scale=PALETTE_SEQ,
+            labels=labels, hover_data={'count': True}
+        )
+        # Áp kích thước marker tùy biến và độ mờ để tránh che khuất
+        fig.update_traces(marker=dict(size=grp['marker_size'], opacity=0.8, line=dict(width=0.5, color='rgba(0,0,0,0.2)')))
+        fig.update_layout(**COMMON_LAYOUT)
+        fig.update_layout(
+            title=f"Phân tán (màu = số điểm trùng) Tự học vs GPA {suffix}",
+            xaxis=dict(range=[0, 105]),
+            yaxis=dict(range=[0, 105]),
+            coloraxis_colorbar=dict(
+                title="Số điểm trùng",
+                orientation="v",
+                thickness=12,
+                len=0.55,
+                y=0.5,
+                yanchor="middle",
+                x=1.02,
+                xanchor="left"
+            ),
+            margin=dict(l=20, r=80, t=40, b=30)
+        )
+    else:
+        # Giữ hành vi trước đó: rời rạc theo nhãn hoặc liên tục theo raw giá trị
+        if discrete_color:
+            d = _prepare_labels(df)
+            fig = px.scatter(
+                d, x="index_tu_luc_scaled", y="gpa_scaled",
+                color="Thời gian tự học", color_discrete_sequence=px.colors.qualitative.Plotly,
+                category_orders={"Thời gian tự học": study_order},
+                labels=labels
+            )
+            fig.update_traces(marker=dict(size=12, opacity=0.8))
+            fig.update_layout(**COMMON_LAYOUT)
+            fig.update_layout(
+                title=f"Phân tán tương quan Tự học vs GPA {suffix}",
+                xaxis=dict(range=[0, 105]),
+                yaxis=dict(range=[0, 105]),
+                legend=dict(title="Mức tự học", orientation="v", y=0.5, x=1.02, xanchor="left", yanchor="middle"),
+                margin=dict(l=20, r=140, t=40, b=30)
+            )
+        else:
+            fig = px.scatter(
+                df, x="index_tu_luc_scaled", y="gpa_scaled",
+                color="time_studying", color_continuous_scale=PALETTE_SEQ,
+                labels=labels
+            )
+            fig.update_traces(marker=dict(size=12, opacity=0.6))
+            fig.update_layout(**COMMON_LAYOUT)
+            fig.update_layout(
+                title=f"Phân tán tương quan Tự học vs GPA {suffix}",
+                xaxis=dict(range=[0, 105]),
+                yaxis=dict(range=[0, 105]),
+                coloraxis_colorbar=dict(
+                    title="Mức tự học",
+                    orientation="v",
+                    thickness=12,
+                    len=0.55,
+                    y=0.5,
+                    yanchor="middle",
+                    x=1.02,
+                    xanchor="left",
+                    tickvals=[1, 2, 3, 4, 5],
+                    ticktext=["1", "2", "3", "4", "5"]
+                ),
+                margin=dict(l=20, r=60, t=40, b=30)
+            )
     return fig
 
 def draw_stacked_bar(df, suffix=""):
