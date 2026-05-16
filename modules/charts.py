@@ -167,6 +167,16 @@ def draw_scatter_plot(df, suffix="", discrete_color=True, count_color=True):
             )
     return fig
 
+def draw_stacked_bar(df, suffix=""):
+    d = _prepare_labels(df)
+    df_bar = d.groupby(['gender_label', 'Học lực']).size().reset_index(name='Số lượng')
+    fig = px.bar(
+        df_bar, y="gender_label", x="Số lượng", color="Học lực", orientation="h",
+        text_auto='.1f', category_orders={"Học lực": gpa_order},
+        color_discrete_sequence=PALETTE_SEQ[::-1]
+    )
+    fig.update_layout(**COMMON_LAYOUT, title=f"Cấu trúc học lực phân rã theo Giới tính {suffix}", barmode='stack', barnorm='percent', showlegend=True, legend=dict(orientation="h", y=-0.2, title=None), xaxis=dict(title=None), yaxis=dict(title=None))
+    return fig
 
 def draw_treemap(df, suffix=""):
     d = _prepare_labels(df)
@@ -188,4 +198,5 @@ def draw_treemap(df, suffix=""):
     )
     fig.update_layout(**COMMON_LAYOUT, title=f"Phân cấp cấu trúc Mức độ hỗ trợ từ Nhà trường {suffix}") 
     return fig
+
 
