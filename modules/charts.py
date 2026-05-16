@@ -105,7 +105,7 @@ def draw_scatter_plot(df, suffix="", discrete_color=True, count_color=True):
         fig.update_traces(marker=dict(size=10, opacity=0.8, line=dict(width=0.5, color='rgba(0,0,0,0.2)')))
         fig.update_layout(**COMMON_LAYOUT)
         fig.update_layout(
-            title=f"Phân tán (màu = số điểm trùng) Tự học vs GPA {suffix}",
+            title=f"Phân tán Tự học vs GPA {suffix}",
             xaxis=dict(range=[0, 105]),
             yaxis=dict(range=[0, 105]),
             coloraxis_colorbar=dict(
