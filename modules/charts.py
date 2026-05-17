@@ -48,13 +48,12 @@ def draw_smart_chart(df_filtered, df_all, suffix=""):
         df_line = df_line.sort_values('order')
         fig = px.line(df_line, x="year_label", y="gpa_scaled", markers=True)
         fig.update_traces(line_color=ORANGE, line_width=4, marker=dict(size=10, color=MINT))
-        fig.update_layout(**COMMON_LAYOUT, title=f"Xu hướng điểm số qua các giai đoạn {suffix}", yaxis=dict(range=[0, 105], title="GPA Quy đổi (Thang 100)"))
+        fig.update_layout(**COMMON_LAYOUT, title=f"Xu hướng điểm số qua các giai đoạn {suffix}", yaxis=dict(range=[0, 105], title="GPA"))
     else:
         current_gpa = df_filtered['gpa_scaled'].mean()
         overall_gpa = df_all['gpa_scaled'].mean()
         lbl = years_selected[0] if len(years_selected) == 1 else "Nhóm chọn"
         
-        # SỬA CHUẨN PLOTLY: Ép chữ nằm inside, dùng thẻ <b> để in đậm
         fig = go.Figure(data=[
             go.Bar(
                 name='Nhóm hiện tại', 
@@ -82,7 +81,7 @@ def draw_smart_chart(df_filtered, df_all, suffix=""):
             title=f"So sánh GPA nhóm với toàn khối {suffix}", 
             barmode='group', 
             bargap=0.4, 
-            yaxis=dict(range=[0, 105], title="GPA Quy đổi (Thang 100)")
+            yaxis=dict(range=[0, 105], title="GPA")
         )
     fig.update_layout(xaxis=dict(title=None))
     return fig
