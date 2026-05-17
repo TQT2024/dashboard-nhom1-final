@@ -48,41 +48,44 @@ def draw_smart_chart(df_filtered, df_all, suffix=""):
         df_line = df_line.sort_values('order')
         fig = px.line(df_line, x="year_label", y="gpa_scaled", markers=True)
         fig.update_traces(line_color=ORANGE, line_width=4, marker=dict(size=10, color=MINT))
-        fig.update_layout(**COMMON_LAYOUT, title=f"Xu hình điểm số qua các giai đoạn {suffix}", yaxis=dict(range=[0, 105], title="GPA Quy đổi (Thang 100)"))
+        fig.update_layout(**COMMON_LAYOUT, title=f"Xu hướng điểm số qua các giai đoạn {suffix}", yaxis=dict(range=[0, 105], title="GPA Quy đổi (Thang 100)"))
     else:
         current_gpa = df_filtered['gpa_scaled'].mean()
         overall_gpa = df_all['gpa_scaled'].mean()
         lbl = years_selected[0] if len(years_selected) == 1 else "Nhóm chọn"
         
+        # SỬA CHUẨN PLOTLY: Ép chữ nằm inside, dùng thẻ <b> để in đậm
         fig = go.Figure(data=[
             go.Bar(
                 name='Nhóm hiện tại', 
                 x=[lbl], 
                 y=[current_gpa], 
                 marker_color=MINT, 
-                text=f"<b>{current_gpa:.1f}</b>", # Thêm thẻ <b> để in đậm text
+                text=f"<b>{current_gpa:.1f}</b>", 
                 textposition='inside', 
-                textfont=dict(color='white', size=14) # Bỏ thuộc tính weight lỗi
+                textfont=dict(color='white', size=14)
             ),
             go.Bar(
                 name='Trung bình toàn khóa', 
                 x=[lbl], 
                 y=[overall_gpa], 
                 marker_color="#a3a3a3", 
-                text=f"<b>{overall_gpa:.1f}</b>", # Thêm thẻ <b> để in đậm text
+                text=f"<b>{overall_gpa:.1f}</b>", 
                 textposition='inside', 
-                textfont=dict(color='white', size=14) # Bỏ thuộc tính weight lỗi
+                textfont=dict(color='white', size=14)
             )
         ])
         
-        # Cấu hình layout đảm bảo kích hoạt khoảng cách barmode và bargap
+        # Điền đầy đủ range=[0, 105] và thêm bargap=0.4 để giãn cách hai cột rời nhau
         fig.update_layout(
             **COMMON_LAYOUT, 
             title=f"So sánh GPA nhóm với toàn khối {suffix}", 
             barmode='group', 
-            bargap=0.4, # Tạo khoảng cách 40% giúp 2 cột tách rời nhau thanh thoát
+            bargap=0.4, 
             yaxis=dict(range=[0, 105], title="GPA Quy đổi (Thang 100)")
         )
+    fig.update_layout(xaxis=dict(title=None))
+    return fig
 
 
 def draw_density_heatmap(df, suffix=""):
