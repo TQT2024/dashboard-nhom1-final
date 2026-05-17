@@ -54,38 +54,35 @@ def draw_smart_chart(df_filtered, df_all, suffix=""):
         overall_gpa = df_all['gpa_scaled'].mean()
         lbl = years_selected[0] if len(years_selected) == 1 else "Nhóm chọn"
         
-        # SỬA TẠI ĐÂY: Thay đổi màu sắc nhãn dữ liệu và ép font màu trắng rõ ràng
         fig = go.Figure(data=[
             go.Bar(
                 name='Nhóm hiện tại', 
                 x=[lbl], 
                 y=[current_gpa], 
                 marker_color=MINT, 
-                text=f"{current_gpa:.1f}", 
-                textposition='inside', # Ép chữ nằm bên trong cột
-                textfont=dict(color='white', size=14, weight='bold') # Chữ trắng, đậm, to rõ
+                text=f"<b>{current_gpa:.1f}</b>", # Thêm thẻ <b> để in đậm text
+                textposition='inside', 
+                textfont=dict(color='white', size=14) # Bỏ thuộc tính weight lỗi
             ),
             go.Bar(
                 name='Trung bình toàn khóa', 
                 x=[lbl], 
                 y=[overall_gpa], 
-                marker_color="#a3a3a3", # Đổi sang màu xám đậm hơn một chút để tăng tương phản
-                text=f"{overall_gpa:.1f}", 
-                textposition='inside', # Ép chữ nằm bên trong cột
-                textfont=dict(color='white', size=14, weight='bold') # Chữ trắng, đậm, to rõ
+                marker_color="#a3a3a3", 
+                text=f"<b>{overall_gpa:.1f}</b>", # Thêm thẻ <b> để in đậm text
+                textposition='inside', 
+                textfont=dict(color='white', size=14) # Bỏ thuộc tính weight lỗi
             )
         ])
         
-        # Bổ sung bargap=0.4 để tạo khoảng cách giúp 2 cột tách nhau ra trông thoáng hơn
+        # Cấu hình layout đảm bảo kích hoạt khoảng cách barmode và bargap
         fig.update_layout(
             **COMMON_LAYOUT, 
             title=f"So sánh GPA nhóm với toàn khối {suffix}", 
             barmode='group', 
-            bargap=0.4, 
+            bargap=0.4, # Tạo khoảng cách 40% giúp 2 cột tách rời nhau thanh thoát
             yaxis=dict(range=[0, 105], title="GPA Quy đổi (Thang 100)")
         )
-    fig.update_layout(xaxis=dict(title=None))
-    return fig
 
 
 def draw_density_heatmap(df, suffix=""):
